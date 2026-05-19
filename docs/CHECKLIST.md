@@ -11,22 +11,22 @@ Progress tracker for the 5-day MVP build.
 - [x] Dependencies installed: cheerio, puppeteer-core, @sparticuz/chromium, @axe-core/puppeteer
 - [x] Git repo initialised
 - [x] CLAUDE.md and project docs in place
-- [ ] `.env.local` created with `PAGESPEED_API_KEY`
-- [ ] `.env.local` added to `.gitignore` (verify)
+- [x] `.env.local` created with `PAGESPEED_API_KEY`
+- [x] `.env.local` added to `.gitignore` (verified - covered by `.env*`)
 
 ### API Route - Foundation
-- [ ] `POST /api/audit` route created
-- [ ] URL validation (must start with http/https)
-- [ ] HEAD request reachability check before full analysis
-- [ ] 400 error with user-friendly message on invalid/unreachable URL
-- [ ] 15-second timeout with `timedOut: true` partial response
-- [ ] IP-based rate limiting (5/hour, in-memory)
+- [x] `POST /api/audit` route created
+- [x] URL validation (must start with http/https)
+- [x] HEAD request reachability check before full analysis
+- [x] 400/422 errors with user-friendly messages on invalid/unreachable URL
+- [x] 25s timeout with `timedOut: true` partial response (shared AbortController passed to all checkers)
+- [x] IP-based rate limiting (5/hour, in-memory)
 
 ### Performance Category
-- [ ] PageSpeed Insights API call (`strategy=mobile`)
-- [ ] Extract: overall score, FCP, LCP, total page size, render-blocking flag
-- [ ] Map to pass/warning/fail per check
-- [ ] Graceful fallback if PageSpeed API fails (flag as unavailable, return other checks)
+- [x] PageSpeed Insights API call (`strategy=mobile`)
+- [x] Extract: overall score, FCP, LCP, total page size, render-blocking flag
+- [x] Map to pass/warning/fail per check
+- [x] Graceful fallback if PageSpeed API fails (flag as unavailable, return other checks)
 
 ---
 
