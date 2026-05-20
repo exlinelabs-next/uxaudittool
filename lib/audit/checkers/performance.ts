@@ -1,24 +1,9 @@
 import { scoreStatus, categoryScore } from '../scoring';
 import type { AuditCheck, CategoryResult } from '../types';
+import type { PageSpeedResponse } from '../fetchers/pagespeed';
 
-const PAGESPEED_URL = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
-
-interface LighthouseAudit {
-  score: number | null;
-  displayValue?: string;
-  numericValue?: number;
-  details?: { items?: unknown[] };
-}
-
-export async function runPerformanceChecks(url: string, signal?: AbortSignal): Promise<CategoryResult> {
-  const key = process.env.PAGESPEED_API_KEY;
-  const endpoint = `${PAGESPEED_URL}?url=${encodeURIComponent(url)}&strategy=mobile&key=${key}`;
-
-  const res = await fetch(endpoint, { signal });
-  if (!res.ok) throw new Error(`PageSpeed API responded with ${res.status}`);
-
-  const data = await res.json();
-  const audits: Record<string, LighthouseAudit> = data.lighthouseResult?.audits ?? {};
+export function runPerformanceChecks(data: PageSpeedResponse): CategoryResult {
+  const audits = data.lighthouseResult?.audits ?? {};
   const perfScore: number = data.lighthouseResult?.categories?.performance?.score ?? 0;
 
   const fcp = audits['first-contentful-paint'] ?? {};
@@ -26,7 +11,8 @@ export async function runPerformanceChecks(url: string, signal?: AbortSignal): P
   const weight = audits['total-byte-weight'] ?? {};
   const blocking = audits['render-blocking-resources'] ?? {};
 
-  const hasBlockingResources = blocking.score !== null && blocking.score !== undefined && blocking.score < 1;
+  const hasBlockingResources =
+    blocking.score !== null && blocking.score !== undefined && blocking.score < 1;
   const blockingCount = blocking.details?.items?.length ?? 0;
 
   const checks: AuditCheck[] = [
