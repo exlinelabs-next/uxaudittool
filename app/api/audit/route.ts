@@ -9,6 +9,7 @@ import { runUxChecks } from '@/lib/audit/checkers/ux';
 import { runMobileChecks } from '@/lib/audit/checkers/mobile';
 import { runAccessibilityChecks } from '@/lib/audit/checkers/accessibility';
 import { unavailableCategory } from '@/lib/audit/scoring';
+import { saveAuditResult } from '@/lib/audit/store';
 import type { AuditResult, CategoryResult } from '@/lib/audit/types';
 
 const AUDIT_TIMEOUT_MS = 25_000;
@@ -181,6 +182,16 @@ export async function POST(request: NextRequest) {
     ...(timedOut && { timedOut: true }),
     categories,
   };
+
+  // Save to Supabase and attach share URL - non-blocking, audit works without it
+  try {
+    const shareId = await saveAuditResult(result);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? '';
+    result.shareId = shareId;
+    result.shareUrl = `${baseUrl}/audit/${shareId}`;
+  } catch {
+    // Supabase unavailable or not configured - continue without share link
+  }
 
   return NextResponse.json(result);
 }

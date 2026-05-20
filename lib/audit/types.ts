@@ -19,6 +19,8 @@ export interface AuditResult {
   scannedAt: string;
   overallScore: number;
   timedOut?: boolean;
+  shareId?: string;
+  shareUrl?: string;
   categories: {
     performance: CategoryResult;
     seo?: CategoryResult;
