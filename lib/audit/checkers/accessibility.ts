@@ -3,29 +3,39 @@ import { AxePuppeteer } from '@axe-core/puppeteer';
 import { categoryScore } from '../scoring';
 import type { AuditCheck, CategoryResult } from '../types';
 
-async function getExecutablePath(): Promise<string> {
-  // Explicit override via env (local dev or custom Railway setup)
-  if (process.env.CHROMIUM_EXECUTABLE_PATH) {
-    return process.env.CHROMIUM_EXECUTABLE_PATH;
-  }
+const SANDBOX_ARGS = [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-gpu',
+];
 
-  // Railway / production - use @sparticuz/chromium
-  const chromium = await import('@sparticuz/chromium');
-  return chromium.default.executablePath();
+interface BrowserConfig {
+  executablePath: string;
+  args: string[];
 }
 
-async function getLaunchArgs(): Promise<string[]> {
+async function getBrowserConfig(): Promise<BrowserConfig> {
+  // 1. Explicit env var - local dev (Brave, Chrome, etc.)
   if (process.env.CHROMIUM_EXECUTABLE_PATH) {
-    // Local Chrome - minimal args
-    return [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-    ];
+    return { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH, args: SANDBOX_ARGS };
   }
-  const chromium = await import('@sparticuz/chromium');
-  return chromium.default.args;
+
+  // 2. System Chromium on PATH - Railway (installed via nixpacks.toml)
+  try {
+    const { execSync } = await import('child_process');
+    const found = execSync(
+      'which chromium 2>/dev/null || which chromium-browser 2>/dev/null || which google-chrome-stable 2>/dev/null',
+      { encoding: 'utf-8', timeout: 3000 }
+    ).trim();
+    if (found) return { executablePath: found, args: SANDBOX_ARGS };
+  } catch {
+    // not on PATH - fall through
+  }
+
+  // 3. @sparticuz/chromium - last resort fallback
+  const { default: chromium } = await import('@sparticuz/chromium');
+  return { executablePath: await chromium.executablePath(), args: chromium.args };
 }
 
 export async function runAccessibilityChecks(
@@ -37,7 +47,7 @@ export async function runAccessibilityChecks(
   try {
     if (signal?.aborted) throw new Error('Aborted before launch');
 
-    const [executablePath, args] = await Promise.all([getExecutablePath(), getLaunchArgs()]);
+    const { executablePath, args } = await getBrowserConfig();
 
     browser = await puppeteer.launch({
       executablePath,
