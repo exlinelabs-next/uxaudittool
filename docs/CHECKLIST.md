@@ -106,6 +106,36 @@ Progress tracker for the 5-day MVP build.
 
 ---
 
+## Backend / Share Links (added mid-build)
+
+### Supabase - Shareable Report URLs
+- [x] `lib/supabase.ts` - graceful client (warns if env vars missing, never throws)
+- [x] `lib/audit/store.ts` - `saveAuditResult()` / `getAuditResult()` with 10-char hex IDs
+- [x] `AuditResult` type updated: `shareId?`, `shareUrl?`
+- [x] `POST /api/audit` saves result + attaches `shareUrl` to response (non-blocking)
+- [x] `GET /api/audit/[id]` - retrieves saved result by share ID
+- [x] `docs/supabase-setup.sql` - table DDL + RLS policies
+- [x] Supabase project `jhjfprcknjfswtczqsxd` (webbeet-ux-audit-tool) - ACTIVE
+- [x] `audit_reports` table created with RLS (public SELECT, service-role INSERT)
+- [x] `.env.local` filled: `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
+
+### GitHub
+- [x] Repo pushed to `Exline-Labs/webbeet-ux-audit-tool` (private, `exline` remote)
+
+### Railway
+- [x] Railway project created: `webbeet-ux-audit-tool` (ID: `eb73aea4-d588-4deb-b6b5-ddbba012ced6`)
+- [x] Production environment: `659b87f3-2f65-44a9-a930-6e57c0dbfb95`
+- [x] All env vars set in Railway production environment:
+  - `PAGESPEED_API_KEY`, `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`
+  - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+  - `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true`, `NEXT_TELEMETRY_DISABLED=1`, `NODE_ENV=production`
+- [ ] **MANUAL STEP**: Add payment method to railway.app (wp@exlinelabs.com) to unblock service creation
+- [ ] Create web service in Railway UI: New Service > GitHub Repo > `Exline-Labs/webbeet-ux-audit-tool`
+- [ ] Add domain in Railway UI (auto-generated `.railway.app` URL or custom)
+- [ ] Set `NEXT_PUBLIC_BASE_URL` to live URL in Railway env vars (and update Postman Production env)
+
+---
+
 ## Day 5 - QA, Error States, Deploy
 
 ### Error Handling (all user-facing, no raw errors)
@@ -122,13 +152,9 @@ Progress tracker for the 5-day MVP build.
 - [ ] Error states tested
 - [ ] Rate limiting tested
 
-### Deployment (Railway - decided Day 2)
-- [ ] Repo pushed to GitHub (private)
-- [ ] `nixpacks.toml` added to install system Chromium (replaces @sparticuz/chromium)
-- [ ] Railway project created + connected to GitHub
-- [ ] Environment variables set in Railway dashboard (`PAGESPEED_API_KEY`, rate limit vars)
-- [ ] `CHROMIUM_EXECUTABLE_PATH` removed for prod (Railway uses system Chromium)
-- [ ] Deployed and live
+### Deployment
+- [x] `nixpacks.toml` added to install system Chromium (replaces @sparticuz/chromium)
+- [ ] Railway service deployed and live (blocked on payment method - see above)
 - [ ] Custom domain set (e.g. `audit.webbeet.studio`)
 - [ ] Postman Production environment updated with live Railway URL
 
@@ -145,5 +171,4 @@ Progress tracker for the 5-day MVP build.
 - Historical comparisons
 - Scheduled re-audits
 - Subpage crawling
-- Share report via unique URL (Supabase + UUID)
 - GTM events per category score
