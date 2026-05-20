@@ -33,46 +33,46 @@ Progress tracker for the 5-day MVP build.
 ## Day 2 - SEO + Trust Checks
 
 ### SEO Category (Cheerio)
-- [ ] Server-side fetch of target URL HTML
-- [ ] Title tag present + length check (30-60 chars)
-- [ ] Meta description present + length check (120-160 chars)
-- [ ] H1 present + count check (warn if multiple)
-- [ ] Canonical tag present
-- [ ] Open Graph tags (og:title + og:description)
+- [x] Server-side fetch of target URL HTML (shared fetcher in `lib/audit/fetchers/html.ts`)
+- [x] Title tag present + length check (30-60 chars)
+- [x] Meta description present + length check (120-160 chars)
+- [x] H1 present + count check (warn if multiple)
+- [x] Canonical tag present
+- [x] Open Graph tags (og:title + og:description)
 
 ### Trust Category (Cheerio + URL)
-- [ ] HTTPS check (URL starts with https://)
-- [ ] Privacy policy link (anchor text/href containing "privacy")
-- [ ] Contact info (phone pattern or email address in HTML)
-- [ ] Copyright notice (footer contains © or "copyright")
+- [x] HTTPS check (URL starts with https://)
+- [x] Privacy policy link (anchor text/href containing "privacy")
+- [x] Contact info (phone pattern or email address in HTML)
+- [x] Copyright notice (footer contains © or "copyright")
 
 ---
 
 ## Day 3 - Accessibility + UX Signals
 
 ### Accessibility Category (axe-core + Puppeteer)
-- [ ] Puppeteer launch with puppeteer-core + @sparticuz/chromium
-- [ ] axe-core run on rendered page (not raw HTML)
-- [ ] Extract violations: images missing alt, form inputs missing labels, colour contrast, missing lang attr, links with no text
-- [ ] Return violation count by severity (critical, serious, moderate)
+- [x] Puppeteer launch via CHROMIUM_EXECUTABLE_PATH (local) / @sparticuz/chromium (prod)
+- [x] axe-core run on rendered page (not raw HTML)
+- [x] Extract violations: images missing alt, form inputs missing labels, colour contrast, missing lang attr, links with no text
+- [x] Return violation count by severity (critical, serious, moderate)
 
 ### UX Signals Category (Cheerio)
-- [ ] Primary CTA detection (button/link with CTA text patterns)
-- [ ] Above-fold content check (h1/h2 in first 1000 chars of body)
-- [ ] Cookie/consent banner detection (class/id patterns: cookie, consent, gdpr)
-- [ ] Navigation present (`<nav>` or `role="navigation"`)
-- [ ] Footer present (`<footer>`)
+- [x] Primary CTA detection (button/link with CTA text patterns)
+- [x] Above-fold content check (h1/h2 in first 1000 chars of body)
+- [x] Cookie/consent banner detection (class/id patterns: cookie, consent, gdpr)
+- [x] Navigation present (`<nav>` or `role="navigation"`)
+- [x] Footer present (`<footer>`)
 
 ### Mobile Category (PageSpeed + Cheerio)
-- [ ] Mobile performance score (from PageSpeed mobile strategy call)
-- [ ] Viewport meta tag present (Cheerio)
-- [ ] Mobile-friendly pass/fail (from PageSpeed audit)
+- [x] Mobile performance score (from shared PageSpeed response)
+- [x] Viewport meta tag present (Cheerio)
+- [x] Content width, tap targets, font size (from PageSpeed audits)
 
 ### Scoring Logic
-- [ ] Per-check status: pass / warning / fail
-- [ ] Category score formula: `((passed + warnings * 0.5) / total) * 100`
-- [ ] Overall score: average of all 6 category scores
-- [ ] Score badges: 80-100 green, 50-79 amber, 0-49 red
+- [x] Per-check status: pass / warning / fail
+- [x] Category score formula: `((passed + warnings * 0.5) / total) * 100`
+- [x] Overall score: average of all 6 category scores (excludes unavailable categories)
+- [x] Score bands defined: 80-100 good, 50-79 needs work, 0-49 poor
 
 ---
 
@@ -122,14 +122,15 @@ Progress tracker for the 5-day MVP build.
 - [ ] Error states tested
 - [ ] Rate limiting tested
 
-### Deployment
+### Deployment (Railway - decided Day 2)
 - [ ] Repo pushed to GitHub (private)
-- [ ] Vercel project created + connected to GitHub
-- [ ] Environment variables added in Vercel dashboard
-- [ ] `PAGESPEED_API_KEY` set in Vercel
-- [ ] `RATE_LIMIT_WINDOW_MS` and `RATE_LIMIT_MAX` set in Vercel
+- [ ] `nixpacks.toml` added to install system Chromium (replaces @sparticuz/chromium)
+- [ ] Railway project created + connected to GitHub
+- [ ] Environment variables set in Railway dashboard (`PAGESPEED_API_KEY`, rate limit vars)
+- [ ] `CHROMIUM_EXECUTABLE_PATH` removed for prod (Railway uses system Chromium)
 - [ ] Deployed and live
 - [ ] Custom domain set (e.g. `audit.webbeet.studio`)
+- [ ] Postman Production environment updated with live Railway URL
 
 ### Analytics
 - [ ] GTM custom event fires on each audit run
