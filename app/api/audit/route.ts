@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/audit/rate-limit';
+import { fetchPageSpeedData } from '@/lib/audit/fetchers/pagespeed';
+import { fetchHtml } from '@/lib/audit/fetchers/html';
 import { runPerformanceChecks } from '@/lib/audit/checkers/performance';
+import { runSeoChecks } from '@/lib/audit/checkers/seo';
+import { runTrustChecks } from '@/lib/audit/checkers/trust';
+import { runUxChecks } from '@/lib/audit/checkers/ux';
+import { runMobileChecks } from '@/lib/audit/checkers/mobile';
+import { runAccessibilityChecks } from '@/lib/audit/checkers/accessibility';
 import { unavailableCategory } from '@/lib/audit/scoring';
 import type { AuditResult, CategoryResult } from '@/lib/audit/types';
 
@@ -23,6 +30,7 @@ function computeOverallScore(categories: AuditResult['categories']): number {
 }
 
 export async function POST(request: NextRequest) {
+  // --- Rate limit ---
   const ip = getClientIp(request);
   const rateLimit = checkRateLimit(ip);
   if (!rateLimit.allowed) {
@@ -32,6 +40,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // --- Parse + validate URL ---
   let body: { url?: string };
   try {
     body = await request.json();
@@ -57,7 +66,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Reachability check before running the full audit
+  // --- Reachability check ---
   try {
     const headRes = await fetch(url.toString(), {
       method: 'HEAD',
@@ -71,7 +80,6 @@ export async function POST(request: NextRequest) {
         { status: 422 }
       );
     }
-    // 405 = site doesn't allow HEAD - that's fine, proceed
     if (headRes.status >= 400 && headRes.status !== 405) {
       return NextResponse.json(
         { error: "We couldn't reach that URL. Check it's live and try again." },
@@ -85,8 +93,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // --- Run all checkers ---
   let timedOut = false;
-
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), AUDIT_TIMEOUT_MS);
 
@@ -95,14 +103,50 @@ export async function POST(request: NextRequest) {
   );
 
   const runCheckers = async (): Promise<AuditResult['categories']> => {
-    const [performance] = await Promise.allSettled([
-      runPerformanceChecks(url.toString(), controller.signal),
-      // seo, trust added Day 2
-      // accessibility, mobile, ux added Day 3
+    // Fetch shared data sources in parallel - one PageSpeed call, one HTML fetch
+    const [pageSpeedResult, htmlResult] = await Promise.allSettled([
+      fetchPageSpeedData(url.toString(), controller.signal),
+      fetchHtml(url.toString(), controller.signal),
+    ]);
+
+    const pageSpeedData =
+      pageSpeedResult.status === 'fulfilled' ? pageSpeedResult.value : null;
+    const htmlData = htmlResult.status === 'fulfilled' ? htmlResult.value : null;
+
+    // Run all 6 checkers in parallel using shared data
+    const [performance, seo, trust, ux, mobile, accessibility] = await Promise.allSettled([
+      pageSpeedData
+        ? Promise.resolve(runPerformanceChecks(pageSpeedData))
+        : Promise.reject('No PageSpeed data'),
+
+      htmlData
+        ? Promise.resolve(runSeoChecks(htmlData.$))
+        : Promise.reject('No HTML'),
+
+      htmlData
+        ? Promise.resolve(runTrustChecks(url.toString(), htmlData.$))
+        : Promise.reject('No HTML'),
+
+      htmlData
+        ? Promise.resolve(runUxChecks(htmlData.$))
+        : Promise.reject('No HTML'),
+
+      pageSpeedData && htmlData
+        ? Promise.resolve(runMobileChecks(pageSpeedData, htmlData.$))
+        : Promise.reject('No data'),
+
+      runAccessibilityChecks(url.toString(), controller.signal),
     ]);
 
     return {
-      performance: performance.status === 'fulfilled' ? performance.value : unavailableCategory(),
+      performance:
+        performance.status === 'fulfilled' ? performance.value : unavailableCategory(),
+      seo: seo.status === 'fulfilled' ? seo.value : unavailableCategory(),
+      trust: trust.status === 'fulfilled' ? trust.value : unavailableCategory(),
+      ux: ux.status === 'fulfilled' ? ux.value : unavailableCategory(),
+      mobile: mobile.status === 'fulfilled' ? mobile.value : unavailableCategory(),
+      accessibility:
+        accessibility.status === 'fulfilled' ? accessibility.value : unavailableCategory(),
     };
   };
 
@@ -111,9 +155,17 @@ export async function POST(request: NextRequest) {
     categories = await Promise.race([runCheckers(), timeoutPromise]);
     clearTimeout(timeoutId);
   } catch (err) {
+    clearTimeout(timeoutId);
     if (err instanceof Error && err.message === 'TIMEOUT') {
       timedOut = true;
-      categories = { performance: unavailableCategory() };
+      categories = {
+        performance: unavailableCategory(),
+        seo: unavailableCategory(),
+        trust: unavailableCategory(),
+        ux: unavailableCategory(),
+        mobile: unavailableCategory(),
+        accessibility: unavailableCategory(),
+      };
     } else {
       return NextResponse.json(
         { error: 'Something went wrong running the audit. Please try again.' },
