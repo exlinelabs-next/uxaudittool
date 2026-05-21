@@ -14,9 +14,10 @@ interface AuditReportProps {
   ctaHref?: string;
   ctaLabel?: string;
   onRerun?: () => void;
+  onRetrySlowPhase?: () => void;
 }
 
-export function AuditReport({ state, ctaHref, ctaLabel, onRerun }: AuditReportProps) {
+export function AuditReport({ state, ctaHref, ctaLabel, onRerun, onRetrySlowPhase }: AuditReportProps) {
   const { status, partial, result } = state;
   if (status === 'idle' || status === 'loading') return null;
 
@@ -51,8 +52,14 @@ export function AuditReport({ state, ctaHref, ctaLabel, onRerun }: AuditReportPr
       <div className="flex flex-col gap-2 mt-1">
         {ALL_CATS.map(cat => {
           const data = (allCategories as Record<string, import('@/lib/audit/types').CategoryResult | undefined>)[cat];
+          const isSlowCat = (SLOW_CATS as readonly string[]).includes(cat);
           return data
-            ? <CategoryAccordion key={cat} category={cat} result={data} />
+            ? <CategoryAccordion
+                key={cat}
+                category={cat}
+                result={data}
+                onRetry={isSlowCat && onRetrySlowPhase ? onRetrySlowPhase : undefined}
+              />
             : <CategoryAccordionSkeleton key={cat} category={cat} />;
         })}
       </div>

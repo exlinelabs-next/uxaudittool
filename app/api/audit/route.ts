@@ -15,10 +15,10 @@ import type {
   AuditStreamEvent,
 } from '@/lib/audit/types';
 
-// Per-operation timeouts. PageSpeed is the slowest - large/complex sites can take 50s+.
-const HTML_TIMEOUT_MS = 10_000;
-const PAGESPEED_TIMEOUT_MS = 90_000;
-const A11Y_TIMEOUT_MS = 35_000;
+// Per-operation timeouts. PageSpeed is the slowest - large/complex sites can take 60s+.
+const HTML_TIMEOUT_MS  = 12_000;
+const PAGESPEED_TIMEOUT_MS = 120_000;
+const A11Y_TIMEOUT_MS  =  60_000;
 
 const encoder = new TextEncoder();
 
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
   }
 
   // --- Parse + validate URL ---
-  let body: { url?: string };
+  let body: { url?: string; onlySlowPhase?: boolean };
   try {
     body = await request.json();
   } catch {
@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const onlySlowPhase = body.onlySlowPhase === true;
   const rawUrl = body.url?.trim() ?? '';
   if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
     return new Response(
@@ -166,6 +167,45 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        if (onlySlowPhase) {
+          // ── Slow-phase-only retry ──────────────────────────────────────────
+          // Re-fetch HTML alongside PageSpeed so mobile checks can run properly.
+          const [pageSpeedResult, a11yResult, htmlRetryResult] = await Promise.allSettled([
+            fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)),
+            runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS)),
+            fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS)),
+          ]);
+
+          const pageSpeedData =
+            pageSpeedResult.status === 'fulfilled' ? pageSpeedResult.value : null;
+          const htmlData =
+            htmlRetryResult.status === 'fulfilled' ? htmlRetryResult.value : null;
+
+          const slowCategories = {
+            performance: pageSpeedData ? runPerformanceChecks(pageSpeedData) : unavailableCategory(),
+            mobile: pageSpeedData && htmlData
+              ? runMobileChecks(pageSpeedData, htmlData.$)
+              : unavailableCategory(),
+            accessibility: a11yResult.status === 'fulfilled' ? a11yResult.value : unavailableCategory(),
+          };
+
+          const overallScore = computeOverallScore({
+            seo: unavailableCategory(), trust: unavailableCategory(), ux: unavailableCategory(),
+            ...slowCategories,
+          });
+
+          let shareId: string | undefined;
+          let shareUrl: string | undefined;
+          try {
+            shareId = await saveAuditResult({ url: urlStr, scannedAt, overallScore, categories: { seo: unavailableCategory(), trust: unavailableCategory(), ux: unavailableCategory(), ...slowCategories } });
+            shareUrl = `${getSiteOrigin(request)}/audit/${shareId}`;
+          } catch { /* non-fatal */ }
+
+          controller.enqueue(sseEvent({ type: 'complete', categories: slowCategories, overallScore, shareId, shareUrl, scannedAt }));
+          controller.close();
+          return;
+        }
+
         // ── Start all three slow fetches simultaneously ────────────────────
         // HTML is fast (~1-3s). PageSpeed and accessibility are slow (20-90s).
         // We kick off all three at once so PageSpeed doesn't wait for HTML.

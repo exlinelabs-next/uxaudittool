@@ -41,7 +41,7 @@ const CATEGORIES = [
 
 /* ── Page ────────────────────────────────────────────────────────────────── */
 export default function HomePage() {
-  const { state, runAudit, reset } = useAudit();
+  const { state, runAudit, retrySlowPhase, reset } = useAudit();
   const startedAt = useRef<number>(0);
 
   // Drive every animation from this single boolean
@@ -75,18 +75,20 @@ export default function HomePage() {
           className="max-w-5xl mx-auto w-full px-4 sm:px-6 flex items-center gap-3"
           style={{ height: 52 }}
         >
-          {/* Logo */}
-          <a
-            href="/"
-            style={{ color: 'var(--wb-text)', textDecoration: 'none', flexShrink: 0 }}
-          >
-            <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>
-              web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
-            </span>
-            <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 400, color: 'var(--wb-muted)' }}>
-              UX Audit
-            </span>
-          </a>
+          {/* Logo / primary nav */}
+          <nav aria-label="Main navigation">
+            <a
+              href="/"
+              style={{ color: 'var(--wb-text)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 0 }}
+            >
+              <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>
+                web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
+              </span>
+              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 400, color: 'var(--wb-muted)' }}>
+                UX Audit
+              </span>
+            </a>
+          </nav>
 
           {/*
            * Middle slot - stats and input occupy the same space.
@@ -211,12 +213,25 @@ export default function HomePage() {
                   color: 'var(--wb-muted)',
                   maxWidth: 500,
                   lineHeight: 1.65,
-                  marginBottom: '2.5rem',
+                  marginBottom: '1rem',
                 }}
               >
                 Get a full technical and UX report across{' '}
                 <strong style={{ color: 'var(--wb-text)', fontWeight: 600 }}>51 checks</strong>{' '}
                 in 6 categories. Results stream live - first findings in seconds.
+              </p>
+
+              {/* Social proof + CTA link */}
+              <p style={{ fontSize: 13, color: 'var(--wb-muted)', marginBottom: '1.5rem' }}>
+                Trusted by businesses and developers to identify what is holding their websites back.{' '}
+                <a
+                  href="https://exlinelabs.com/contact"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--wb-accent)', textDecoration: 'underline', textUnderlineOffset: 3, fontWeight: 600 }}
+                >
+                  Book a free discovery call
+                </a>
               </p>
 
               {/*
@@ -255,9 +270,37 @@ export default function HomePage() {
                 </div>
               )}
 
+              {/* Contact form */}
+              <form
+                action="https://exlinelabs.com/contact"
+                method="get"
+                className="flex items-center gap-2 mt-4"
+                style={{ maxWidth: 420, width: '100%' }}
+              >
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="your@email.com"
+                  className="flex-1 px-3 py-2 rounded outline-none"
+                  style={{
+                    fontSize: 13,
+                    background: 'var(--wb-surface)',
+                    border: '1px solid var(--wb-border)',
+                    color: 'var(--wb-text)',
+                  }}
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-2 rounded shrink-0 font-semibold transition-opacity hover:opacity-80"
+                  style={{ fontSize: 12, background: 'var(--wb-surface)', border: '1px solid var(--wb-border)', color: 'var(--wb-muted)' }}
+                >
+                  Get in touch
+                </button>
+              </form>
+
               {/* Trust line */}
-              <p style={{ fontSize: 12, color: 'var(--wb-dim)', marginTop: '1.25rem' }}>
-                Powered by <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-dim)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Exline Labs</a> &mdash; Google PageSpeed Insights + axe-core WCAG engine
+              <p style={{ fontSize: 12, color: 'var(--wb-muted)', marginTop: '1.25rem' }}>
+                Powered by <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Exline Labs</a> &mdash; Google PageSpeed Insights + axe-core WCAG engine
               </p>
             </section>
 
@@ -381,7 +424,7 @@ export default function HomePage() {
         )}
 
         {/* Audit report */}
-        <AuditReport state={state} onRerun={() => runAudit(state.url)} />
+        <AuditReport state={state} onRerun={() => runAudit(state.url)} onRetrySlowPhase={retrySlowPhase} />
       </div>
     </div>
   );

@@ -41,15 +41,19 @@ export function CategoryAccordion({
   category,
   result,
   defaultOpen,
+  onRetry,
 }: {
   category: string;
   result: CategoryResult;
   defaultOpen?: boolean;
+  onRetry?: () => void;
 }) {
   const label   = CATEGORY_LABELS[category] ?? category;
   const fails   = result.checks.filter(c => c.status === 'fail');
   const warns   = result.checks.filter(c => c.status === 'warning');
   const passes  = result.checks.filter(c => c.status === 'pass');
+  // Each check contributes equally. Show how many score points each fail/warn costs.
+  const ptsEach = result.checks.length > 0 ? Math.round(100 / result.checks.length) : 0;
 
   // Sort checks: fails → warnings → passes
   const sorted  = [...fails, ...warns, ...passes];
@@ -60,7 +64,7 @@ export function CategoryAccordion({
     return (
       <div
         className="flex items-center gap-3 px-4 py-3 rounded"
-        style={{ border: '1px solid var(--wb-border)', color: 'var(--wb-muted)' }}
+        style={{ border: '1px solid var(--wb-border)' }}
       >
         <span className="text-sm font-medium" style={{ color: 'var(--wb-muted)' }}>{label}</span>
         <div className="ml-auto flex items-center gap-2">
@@ -74,7 +78,25 @@ export function CategoryAccordion({
           >
             Timed out
           </span>
-          <span className="text-xs" style={{ color: 'var(--wb-dim)' }}>Re-run audit to retry</span>
+          {onRetry ? (
+            <button
+              onClick={onRetry}
+              className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-opacity hover:opacity-80"
+              style={{
+                background: 'var(--wb-accent)',
+                color: '#000',
+                fontWeight: 700,
+              }}
+            >
+              <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                <path d="M10.5 2A5 5 0 1 0 11 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M8 2h2.5V4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Retry
+            </button>
+          ) : (
+            <span className="text-xs" style={{ color: 'var(--wb-muted)' }}>Re-run audit to retry</span>
+          )}
         </div>
       </div>
     );
@@ -163,7 +185,7 @@ export function CategoryAccordion({
             <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--wb-border)' }}>
-                  {['Check', 'Status', 'Value', 'Notes'].map(h => (
+                  {['Check', 'Impact', 'Status', 'Value', 'Notes'].map(h => (
                     <th
                       key={h}
                       className="px-4 py-2 text-left font-medium"
@@ -184,15 +206,35 @@ export function CategoryAccordion({
                     }}
                   >
                     {/* Check name */}
-                    <td className="px-4 py-2.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--wb-text)', width: '28%' }}>
+                    <td className="px-4 py-2.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--wb-text)', width: '25%' }}>
                       <div className="flex items-center gap-2">
                         <StatusDot status={check.status} />
                         {check.label}
                       </div>
                     </td>
 
+                    {/* Impact */}
+                    <td className="px-4 py-2.5" style={{ width: '9%' }}>
+                      <span
+                        className="font-mono text-xs font-semibold"
+                        style={{
+                          color: check.status === 'fail'
+                            ? 'var(--wb-critical)'
+                            : check.status === 'warning'
+                            ? 'var(--wb-warning)'
+                            : 'var(--wb-pass)',
+                        }}
+                      >
+                        {check.status === 'fail'
+                          ? `-${ptsEach} pts`
+                          : check.status === 'warning'
+                          ? `-${Math.round(ptsEach / 2)} pts`
+                          : `+${ptsEach} pts`}
+                      </span>
+                    </td>
+
                     {/* Status */}
-                    <td className="px-4 py-2.5" style={{ width: '12%' }}>
+                    <td className="px-4 py-2.5" style={{ width: '11%' }}>
                       <StatusBadge status={check.status} />
                     </td>
 
