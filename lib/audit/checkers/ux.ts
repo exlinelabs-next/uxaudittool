@@ -77,5 +77,76 @@ export function runUxChecks($: CheerioAPI): CategoryResult {
     description: 'A footer typically contains contact info, legal links, and secondary navigation.',
   });
 
+  // --- Contact form ---
+  const hasForm = $('form').length > 0;
+  const hasContactForm =
+    hasForm &&
+    ($('input[type="email"]').length > 0 ||
+      $('textarea').length > 0 ||
+      /contact|enquir|get.?in.?touch|message/i.test($('form').text()));
+
+  checks.push({
+    id: 'contact-form',
+    label: 'Contact / lead form',
+    value: hasContactForm ? 'Found' : 'Not detected',
+    status: hasContactForm ? 'pass' : 'warning',
+    description:
+      'A contact or lead form gives visitors a direct way to get in touch and convert.',
+  });
+
+  // --- Social proof ---
+  const bodyText = $('body').text();
+  const hasSocialProof =
+    /testimonial|review|rating|stars|trusted by|clients|customers|case.?stud/i.test(bodyText);
+
+  checks.push({
+    id: 'social-proof',
+    label: 'Social proof signals',
+    value: hasSocialProof ? 'Detected' : 'Not detected',
+    status: hasSocialProof ? 'pass' : 'warning',
+    description:
+      'Testimonials, reviews, or client logos build trust and increase conversion rates.',
+  });
+
+  // --- Social media links ---
+  const socialPatterns = /facebook\.com|twitter\.com|x\.com|linkedin\.com|instagram\.com|youtube\.com|tiktok\.com/i;
+  const socialLinks: string[] = [];
+  $('a[href]').each((_, el) => {
+    const href = $(el).attr('href') ?? '';
+    if (socialPatterns.test(href)) {
+      const match = href.match(/(?:facebook|twitter|x\.com|linkedin|instagram|youtube|tiktok)/i);
+      if (match && !socialLinks.includes(match[0].toLowerCase())) {
+        socialLinks.push(match[0].toLowerCase());
+      }
+    }
+  });
+
+  checks.push({
+    id: 'social-links',
+    label: 'Social media links',
+    value: socialLinks.length > 0 ? socialLinks.join(', ') : 'None found',
+    status: socialLinks.length > 0 ? 'pass' : 'warning',
+    description:
+      'Links to social profiles show an active online presence and give visitors more ways to connect.',
+  });
+
+  // --- Live chat widget ---
+  const chatPatterns =
+    /intercom|drift|crisp|freshchat|tidio|zendesk|hubspot|tawk|livechat|olark/i;
+  const hasChatScript = $('script[src]').toArray().some(el =>
+    chatPatterns.test($(el).attr('src') ?? '')
+  );
+  const hasChatId = $('[id*="intercom"],[id*="drift"],[id*="crisp"],[class*="chat-widget"],[id*="tidio"],[id*="tawk"]').length > 0;
+  const hasChat = hasChatScript || hasChatId;
+
+  checks.push({
+    id: 'live-chat',
+    label: 'Live chat / support widget',
+    value: hasChat ? 'Detected' : 'Not detected',
+    status: hasChat ? 'pass' : 'warning',
+    description:
+      'Live chat tools (Intercom, Drift, Crisp etc.) can significantly improve conversion rates.',
+  });
+
   return { score: categoryScore(checks), checks };
 }

@@ -60,6 +60,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# /usr/bin/chromium is a shell wrapper - Puppeteer needs the real binary
+ENV CHROMIUM_EXECUTABLE_PATH=/usr/lib/chromium/chromium
+
 USER nextjs
 
 EXPOSE 3000
