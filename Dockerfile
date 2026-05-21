@@ -3,6 +3,12 @@ FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package*.json ./
+
+# Must be set before npm ci to prevent Puppeteer downloading Chromium during install
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV NEXT_TELEMETRY_DISABLED=1
+
 RUN npm ci
 
 COPY . .
@@ -10,8 +16,6 @@ COPY . .
 # Required at build time for any statically generated pages
 ARG NEXT_PUBLIC_BASE_URL
 ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 RUN npm run build
 
