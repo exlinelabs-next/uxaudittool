@@ -45,3 +45,18 @@ Never commit `.env.local`.
 - All third-party fetches are server-side only (no API keys on client)
 - Puppeteer uses puppeteer-core + @sparticuz/chromium (not full puppeteer) for Vercel compatibility
 - Homepage only for MVP - no subpage crawling
+
+## Git Workflow
+
+**Branches:** `main` (production) and `dev` (integration)
+
+1. Create a feature branch off `dev` for every piece of work
+2. When done, open a PR from feature branch → `dev` using `.github/PULL_REQUEST_TEMPLATE.md`
+3. After merge, delete the feature branch
+4. When dev is stable, open a PR from `dev` → `main` using the same template
+
+**Never commit directly to `dev` or `main`.**
+
+Remotes:
+- `exline` → `https://github.com/Exline-Labs/webbeet-ux-audit-tool.git` (primary)
+- `origin` → `https://github.com/JUDEJEEVAN/webeet-ux-audit-tool.git` (personal mirror)
