@@ -61,7 +61,7 @@ export default function HomePage() {
         >
           {/* Logo */}
           <a
-            href="https://webbeet.studio"
+            href="/"
             style={{ color: 'var(--wb-text)', textDecoration: 'none', flexShrink: 0 }}
           >
             <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>
