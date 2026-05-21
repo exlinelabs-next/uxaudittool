@@ -36,6 +36,7 @@ jobs:
             ghcr.io/exline-labs/webbeet-ux-audit-tool:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_BASE_URL=https://ux-audit.exlinelabs.co.uk
+            NEXT_PUBLIC_GA_ID=G-DVYSHS83XR
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
