@@ -1,6 +1,6 @@
 /**
  * SVG radar chart showing scores across all 6 audit categories.
- * Purely decorative — all data is in the table below.
+ * Purely decorative - all data is in the table below.
  */
 
 const CATEGORIES = [

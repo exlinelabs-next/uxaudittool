@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* ── Brand tokens — dark mode (default) ─────────────────────────────────── */
+/* ── Brand tokens - dark mode (default) ─────────────────────────────────── */
 :root, [data-theme="dark"] {
-  --wb-accent:    #C8F135;   /* lime — CTA buttons only                    */
+  --wb-accent:    #C8F135;   /* lime - CTA buttons only                    */
   --wb-bg:        #09090b;   /* page background                            */
   --wb-surface:   #111114;   /* panel / card surface                       */
   --wb-surface-2: #17171b;   /* nested rows, table stripes                 */
@@ -18,9 +18,9 @@
   --wb-info:      #5b8dee;   /* informational                              */
 }
 
-/* ── Brand tokens — light mode ───────────────────────────────────────────── */
+/* ── Brand tokens - light mode ───────────────────────────────────────────── */
 [data-theme="light"] {
-  --wb-accent:    #5a9e00;   /* darker lime — legible on white             */
+  --wb-accent:    #5a9e00;   /* darker lime - legible on white             */
   --wb-bg:        #f4f4f5;
   --wb-surface:   #ffffff;
   --wb-surface-2: #f1f1f4;

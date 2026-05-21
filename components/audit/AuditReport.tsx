@@ -42,7 +42,7 @@ export function AuditReport({ state, ctaHref, ctaLabel }: AuditReportProps) {
         isPartial={status === 'partial'}
       />
 
-      {/* Phase 2 progress indicator — shown while performance/mobile/a11y are loading */}
+      {/* Phase 2 progress indicator - shown while performance/mobile/a11y are loading */}
       {status === 'partial' && <AuditProgress />}
 
       {/* Accordion sections */}

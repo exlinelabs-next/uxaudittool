@@ -19,7 +19,7 @@ export function AuditProgress() {
       {/* Steps */}
       <div className="flex items-center gap-0 flex-1 min-w-0">
 
-        {/* Phase 1 — complete */}
+        {/* Phase 1 - complete */}
         <div className="flex items-center gap-2 shrink-0">
           <span
             className="flex items-center justify-center rounded-full text-xs font-bold"
@@ -44,7 +44,7 @@ export function AuditProgress() {
           style={{ background: 'var(--wb-border)' }}
         />
 
-        {/* Phase 2 — in progress */}
+        {/* Phase 2 - in progress */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Animated spinner ring */}
           <span

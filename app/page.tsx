@@ -73,13 +73,13 @@ export default function HomePage() {
           </a>
 
           {/*
-           * Middle slot — stats and input occupy the same space.
+           * Middle slot - stats and input occupy the same space.
            * Both are position:absolute inside so they can cross-fade
            * without affecting layout. The slot itself stays flex:1.
            */}
           <div className="flex-1" style={{ position: 'relative', height: '100%' }}>
 
-            {/* Stats — visible when idle, exits upward */}
+            {/* Stats - visible when idle, exits upward */}
             <div
               className="absolute inset-0 flex items-center justify-end"
               style={{
@@ -101,7 +101,7 @@ export default function HomePage() {
             </div>
 
             {/*
-             * URL input — hidden when idle, slides in from below when active.
+             * URL input - hidden when idle, slides in from below when active.
              * Delay matches the hero input exit so it feels like the same
              * element arrived here (morph illusion).
              */}
@@ -133,12 +133,12 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* ── HERO — collapses via grid-template-rows ──────────────────────── */}
+      {/* ── HERO - collapses via grid-template-rows ──────────────────────── */}
       {/*
        * grid-template-rows: 1fr → 0fr smoothly animates the row height to 0.
        * The inner div has overflow:hidden so content clips cleanly.
        * Content itself fades + translates up simultaneously so it's invisible
-       * before the clip reaches it — no jarring cut.
+       * before the clip reaches it - no jarring cut.
        */}
       <div
         style={{
@@ -200,12 +200,12 @@ export default function HomePage() {
               >
                 Get a full technical and UX report across{' '}
                 <strong style={{ color: 'var(--wb-text)', fontWeight: 600 }}>51 checks</strong>{' '}
-                in 6 categories. Results stream live — first findings in seconds.
+                in 6 categories. Results stream live - first findings in seconds.
               </p>
 
               {/*
                * URL input with corner brackets.
-               * This is the "source" of the morph — exits upward
+               * This is the "source" of the morph - exits upward
                * while the header input enters from below.
                */}
               <div style={{ position: 'relative', width: '100%', maxWidth: 560, padding: 12 }}>
@@ -309,7 +309,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── RESULTS AREA — fades in after hero exits ─────────────────────── */}
+      {/* ── RESULTS AREA - fades in after hero exits ─────────────────────── */}
       {/*
        * Renders immediately so AuditReport can start its own streaming logic,
        * but is visually hidden (opacity 0, translateY 20px) until active.
@@ -342,7 +342,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Loading spinner — shown while fetching before first results */}
+        {/* Loading spinner - shown while fetching before first results */}
         {state.status === 'loading' && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div
