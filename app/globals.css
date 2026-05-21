@@ -60,3 +60,40 @@ html, body {
 
 /* Shared keyframes */
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Print / PDF styles ──────────────────────────────────────────────────── */
+@media print {
+  /* Hide interactive chrome */
+  header, footer, .no-print,
+  [data-cookie-banner], [data-cookie-link] {
+    display: none !important;
+  }
+
+  /* White background for print */
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Force all accordions open */
+  .accordion-grid {
+    grid-template-rows: 1fr !important;
+  }
+  .accordion-overflow {
+    overflow: visible !important;
+  }
+  .accordion-content {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Avoid breaking inside accordions */
+  .accordion-grid, table, tr {
+    break-inside: avoid;
+  }
+
+  /* Keep links readable */
+  a[href]::after {
+    content: none;
+  }
+}
