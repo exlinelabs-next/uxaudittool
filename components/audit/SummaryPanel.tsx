@@ -133,7 +133,7 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
               </div>
             ))}
           </div>
-          <span className="text-xs" style={{ color: 'var(--wb-dim)' }}>{totalChecks} checks</span>
+          <span className="text-xs" style={{ color: 'var(--wb-muted)' }}>{totalChecks} checks</span>
         </div>
 
         {/* Radar chart */}

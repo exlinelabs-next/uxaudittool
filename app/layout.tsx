@@ -99,23 +99,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             gap: '0.5rem',
           }}
         >
-          <span style={{ fontSize: 12, color: 'var(--wb-dim)' }}>
+          <span style={{ fontSize: 12, color: 'var(--wb-muted)' }}>
             Powered by{' '}
             <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'none', fontWeight: 600 }}>Exline Labs</a>
             {' '}&mdash; &copy; {new Date().getFullYear()}. Free to use.
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <a href="mailto:info@exlinelabs.com" style={{ fontSize: 12, color: 'var(--wb-dim)', textDecoration: 'none' }}>
+          <nav aria-label="Footer navigation" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <a href="mailto:info@exlinelabs.com" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
               info@exlinelabs.com
             </a>
-            <a href="/privacy" style={{ fontSize: 12, color: 'var(--wb-dim)', textDecoration: 'none' }}>
+            <a href="/privacy" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
               Privacy Policy
             </a>
-            <a href="https://www.linkedin.com/company/exlinelabs/posts/?feedView=all" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--wb-dim)', textDecoration: 'none' }}>
+            <a href="/terms" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
+              Terms
+            </a>
+            <a href="https://www.linkedin.com/company/exlinelabs/posts/?feedView=all" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
               LinkedIn
             </a>
+            <a href="https://github.com/Exline-Labs" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
+              GitHub
+            </a>
             <CookiePreferencesLink />
-          </div>
+          </nav>
         </footer>
 
         {/* GA4 - only renders after consent accepted */}
