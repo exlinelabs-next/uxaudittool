@@ -1,0 +1,19 @@
+{
+  "name": "@webbeet/audit-ui",
+  "version": "1.0.0",
+  "description": "Drop a fully-working UX audit page into any Next.js project in one command.",
+  "keywords": ["webbeet", "ux-audit", "nextjs", "audit", "seo"],
+  "author": "Exline Labs",
+  "license": "MIT",
+  "bin": {
+    "audit-ui": "./bin/cli.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "templates",
+    "README.md"
+  ]
+}

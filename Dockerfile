@@ -17,6 +17,9 @@ COPY . .
 ARG NEXT_PUBLIC_BASE_URL
 ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
 
+ARG NEXT_PUBLIC_GA_ID
+ENV NEXT_PUBLIC_GA_ID=$NEXT_PUBLIC_GA_ID
+
 RUN npm run build
 
 # ── Stage 2: Run with Chromium ─────────────────────────────────────────────────
