@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { checkRateLimit } from '@/lib/audit/rate-limit';
 import { fetchPageSpeedData } from '@/lib/audit/fetchers/pagespeed';
 import { fetchHtml } from '@/lib/audit/fetchers/html';
@@ -10,14 +10,29 @@ import { runMobileChecks } from '@/lib/audit/checkers/mobile';
 import { runAccessibilityChecks } from '@/lib/audit/checkers/accessibility';
 import { unavailableCategory } from '@/lib/audit/scoring';
 import { saveAuditResult } from '@/lib/audit/store';
-import type { AuditResult, CategoryResult } from '@/lib/audit/types';
+import type {
+  AuditCategories,
+  AuditStreamEvent,
+} from '@/lib/audit/types';
 
-// Per-operation timeouts - PageSpeed can be slow for large/complex sites
+// Per-operation timeouts. PageSpeed is the slowest - large/complex sites can take 50s+.
 const HTML_TIMEOUT_MS = 10_000;
-const PAGESPEED_TIMEOUT_MS = 55_000;
+const PAGESPEED_TIMEOUT_MS = 90_000;
 const A11Y_TIMEOUT_MS = 35_000;
-// Soft overall timeout - marks result as timedOut but still returns partial data
-const AUDIT_TIMEOUT_MS = 60_000;
+
+const encoder = new TextEncoder();
+
+function sseEvent(data: AuditStreamEvent): Uint8Array {
+  return encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+function computeOverallScore(categories: AuditCategories): number {
+  const scores = Object.values(categories)
+    .filter(c => !c.unavailable && c.checks.length > 0)
+    .map(c => c.score);
+  if (scores.length === 0) return 0;
+  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+}
 
 function getClientIp(request: NextRequest): string {
   return (
@@ -27,22 +42,14 @@ function getClientIp(request: NextRequest): string {
   );
 }
 
-function computeOverallScore(categories: AuditResult['categories']): number {
-  const scores = Object.values(categories)
-    .filter((c): c is CategoryResult => !!c && !c.unavailable && c.checks.length > 0)
-    .map(c => c.score);
-  if (scores.length === 0) return 0;
-  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-}
-
 export async function POST(request: NextRequest) {
   // --- Rate limit ---
   const ip = getClientIp(request);
   const rateLimit = checkRateLimit(ip);
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: "You've run several audits recently. Try again in an hour." },
-      { status: 429 }
+    return new Response(
+      JSON.stringify({ error: "You've run several audits recently. Try again in an hour." }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
@@ -51,14 +58,17 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    return new Response(
+      JSON.stringify({ error: 'Invalid request body.' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   const rawUrl = body.url?.trim() ?? '';
   if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
-    return NextResponse.json(
-      { error: 'Please enter a valid website URL including https://' },
-      { status: 400 }
+    return new Response(
+      JSON.stringify({ error: 'Please enter a valid website URL including https://' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
@@ -66,9 +76,9 @@ export async function POST(request: NextRequest) {
   try {
     url = new URL(rawUrl);
   } catch {
-    return NextResponse.json(
-      { error: 'Please enter a valid website URL including https://' },
-      { status: 400 }
+    return new Response(
+      JSON.stringify({ error: 'Please enter a valid website URL including https://' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
@@ -77,107 +87,156 @@ export async function POST(request: NextRequest) {
     const headRes = await fetch(url.toString(), {
       method: 'HEAD',
       redirect: 'follow',
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(8_000),
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WebAuditBot/1.0)' },
     });
     if (headRes.status === 403) {
-      return NextResponse.json(
-        { error: 'This site blocked our request. Some sites restrict automated access.' },
-        { status: 422 }
+      return new Response(
+        JSON.stringify({ error: 'This site blocked our request. Some sites restrict automated access.' }),
+        { status: 422, headers: { 'Content-Type': 'application/json' } }
       );
     }
     if (headRes.status >= 400 && headRes.status !== 405) {
-      return NextResponse.json(
-        { error: "We couldn't reach that URL. Check it's live and try again." },
-        { status: 422 }
+      return new Response(
+        JSON.stringify({ error: "We couldn't reach that URL. Check it's live and try again." }),
+        { status: 422, headers: { 'Content-Type': 'application/json' } }
       );
     }
   } catch {
-    return NextResponse.json(
-      { error: "We couldn't reach that URL. Check it's live and try again." },
-      { status: 422 }
+    return new Response(
+      JSON.stringify({ error: "We couldn't reach that URL. Check it's live and try again." }),
+      { status: 422, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
-  // --- Run all checkers ---
-  // Each operation has its own timeout - slow PageSpeed/accessibility won't zero out fast HTML checks.
-  // Promise.allSettled ensures partial results are always returned.
-  const startTime = Date.now();
+  // --- Stream the audit in two phases ---
+  const scannedAt = new Date().toISOString();
+  const urlStr = url.toString();
 
-  let categories: AuditResult['categories'];
-  try {
-    // Fetch shared data sources in parallel with individual timeouts
-    const [pageSpeedResult, htmlResult] = await Promise.allSettled([
-      fetchPageSpeedData(url.toString(), AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)),
-      fetchHtml(url.toString(), AbortSignal.timeout(HTML_TIMEOUT_MS)),
-    ]);
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        // ── Start all three slow fetches simultaneously ────────────────────
+        // HTML is fast (~1-3s). PageSpeed and accessibility are slow (20-90s).
+        // We kick off all three at once so PageSpeed doesn't wait for HTML.
+        const htmlPromise = fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS));
+        const pageSpeedPromise = fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS));
+        const a11yPromise = runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS));
 
-    const pageSpeedData =
-      pageSpeedResult.status === 'fulfilled' ? pageSpeedResult.value : null;
-    const htmlData = htmlResult.status === 'fulfilled' ? htmlResult.value : null;
+        // ── Phase 1: fast HTML-based checks (SEO, trust, UX) ──────────────
+        // Await only HTML - PageSpeed is already running in the background.
+        // Send partial results to the client as soon as HTML finishes (~1-3s).
+        const htmlResult = await htmlPromise;
 
-    // Run all 6 checkers in parallel - HTML checks are near-instant, accessibility uses its own timeout
-    const [performance, seo, trust, ux, mobile, accessibility] = await Promise.allSettled([
-      pageSpeedData
-        ? Promise.resolve(runPerformanceChecks(pageSpeedData))
-        : Promise.reject('No PageSpeed data'),
+        const fastCategories = {
+          seo: runSeoChecks(htmlResult.$),
+          trust: runTrustChecks(urlStr, htmlResult.$),
+          ux: runUxChecks(htmlResult.$),
+        };
 
-      htmlData
-        ? Promise.resolve(runSeoChecks(htmlData.$))
-        : Promise.reject('No HTML'),
+        controller.enqueue(sseEvent({ type: 'partial', categories: fastCategories }));
 
-      htmlData
-        ? Promise.resolve(runTrustChecks(url.toString(), htmlData.$))
-        : Promise.reject('No HTML'),
+        // ── Phase 2: slow checks (PageSpeed + accessibility) ──────────────
+        // Both are already in flight - just wait for whichever finishes last.
+        // Each has its own timeout so a slow site doesn't block the other.
+        const [pageSpeedResult, a11yResult] = await Promise.allSettled([
+          pageSpeedPromise,
+          a11yPromise,
+        ]);
 
-      htmlData
-        ? Promise.resolve(runUxChecks(htmlData.$))
-        : Promise.reject('No HTML'),
+        const pageSpeedData =
+          pageSpeedResult.status === 'fulfilled' ? pageSpeedResult.value : null;
 
-      pageSpeedData && htmlData
-        ? Promise.resolve(runMobileChecks(pageSpeedData, htmlData.$))
-        : Promise.reject('No data'),
+        const slowCategories = {
+          performance: pageSpeedData
+            ? runPerformanceChecks(pageSpeedData)
+            : unavailableCategory(),
+          mobile: pageSpeedData
+            ? runMobileChecks(pageSpeedData, htmlResult.$)
+            : unavailableCategory(),
+          accessibility:
+            a11yResult.status === 'fulfilled' ? a11yResult.value : unavailableCategory(),
+        };
 
-      runAccessibilityChecks(url.toString(), AbortSignal.timeout(A11Y_TIMEOUT_MS)),
-    ]);
+        const allCategories: AuditCategories = { ...fastCategories, ...slowCategories };
+        const overallScore = computeOverallScore(allCategories);
 
-    categories = {
-      performance:
-        performance.status === 'fulfilled' ? performance.value : unavailableCategory(),
-      seo: seo.status === 'fulfilled' ? seo.value : unavailableCategory(),
-      trust: trust.status === 'fulfilled' ? trust.value : unavailableCategory(),
-      ux: ux.status === 'fulfilled' ? ux.value : unavailableCategory(),
-      mobile: mobile.status === 'fulfilled' ? mobile.value : unavailableCategory(),
-      accessibility:
-        accessibility.status === 'fulfilled' ? accessibility.value : unavailableCategory(),
-    };
-  } catch {
-    return NextResponse.json(
-      { error: 'Something went wrong running the audit. Please try again.' },
-      { status: 500 }
-    );
-  }
+        // Save full result to Supabase for shareable link (non-blocking)
+        let shareId: string | undefined;
+        let shareUrl: string | undefined;
+        try {
+          shareId = await saveAuditResult({ url: urlStr, scannedAt, overallScore, categories: allCategories });
+          shareUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/audit/${shareId}`;
+        } catch {
+          // Supabase unavailable - audit still works without share link
+        }
 
-  // Mark as timed out if overall duration exceeded soft limit
-  const timedOut = Date.now() - startTime > AUDIT_TIMEOUT_MS;
+        controller.enqueue(
+          sseEvent({ type: 'complete', categories: slowCategories, overallScore, shareId, shareUrl, scannedAt })
+        );
 
-  const result: AuditResult = {
-    url: url.toString(),
-    scannedAt: new Date().toISOString(),
-    overallScore: computeOverallScore(categories),
-    ...(timedOut && { timedOut: true }),
-    categories,
-  };
+      } catch {
+        // HTML fetch failed (bot block, bad HTML, etc.) - fall through to slow checks
+        // and return whatever we can get from PageSpeed alone.
+        try {
+          const [pageSpeedResult, a11yResult] = await Promise.allSettled([
+            fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)),
+            runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS)),
+          ]);
 
-  // Save to Supabase and attach share URL - non-blocking, audit works without it
-  try {
-    const shareId = await saveAuditResult(result);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? '';
-    result.shareId = shareId;
-    result.shareUrl = `${baseUrl}/audit/${shareId}`;
-  } catch {
-    // Supabase unavailable or not configured - continue without share link
-  }
+          const pageSpeedData =
+            pageSpeedResult.status === 'fulfilled' ? pageSpeedResult.value : null;
 
-  return NextResponse.json(result);
+          // Without HTML we can't run mobile (needs Cheerio viewport check),
+          // so mark seo/trust/ux/mobile as unavailable and return what we have.
+          const allCategories: AuditCategories = {
+            seo: unavailableCategory(),
+            trust: unavailableCategory(),
+            ux: unavailableCategory(),
+            performance: pageSpeedData ? runPerformanceChecks(pageSpeedData) : unavailableCategory(),
+            mobile: unavailableCategory(),
+            accessibility: a11yResult.status === 'fulfilled' ? a11yResult.value : unavailableCategory(),
+          };
+
+          const overallScore = computeOverallScore(allCategories);
+
+          let shareId: string | undefined;
+          let shareUrl: string | undefined;
+          try {
+            shareId = await saveAuditResult({ url: urlStr, scannedAt, overallScore, categories: allCategories });
+            shareUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/audit/${shareId}`;
+          } catch { /* non-fatal */ }
+
+          controller.enqueue(
+            sseEvent({
+              type: 'complete',
+              categories: {
+                performance: allCategories.performance,
+                mobile: allCategories.mobile,    // unavailable (no HTML)
+                accessibility: allCategories.accessibility,
+              },
+              overallScore,
+              shareId,
+              shareUrl,
+              scannedAt,
+            })
+          );
+        } catch {
+          controller.enqueue(
+            sseEvent({ type: 'error', error: 'Something went wrong running the audit. Please try again.', status: 500 })
+          );
+        }
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no', // Disable Nginx buffering so events flush immediately
+    },
+  });
 }
