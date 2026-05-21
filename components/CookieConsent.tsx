@@ -56,9 +56,6 @@ export function CookieConsent() {
           boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
         }}
       >
-        {/* Icon */}
-        <span style={{ fontSize: 20, flexShrink: 0 }}>📊</span>
-
         {/* Text */}
         <div style={{ flex: 1, minWidth: 200 }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--wb-text)', margin: 0 }}>
