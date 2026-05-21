@@ -298,7 +298,7 @@
     },
     {
       "name": "Rate Limiting",
-      "description": "5 audits per IP per hour. The 6th request returns 429 before the stream opens — response is plain JSON.",
+      "description": "25 audits per IP per hour. The 26th request returns 429 before the stream opens — response is plain JSON.",
       "item": [
         {
           "name": "Trigger rate limit (send 6 times)",
@@ -317,7 +317,7 @@
                   "    });",
                   "    console.log('Rate limit hit — working correctly');",
                   "} else {",
-                  "    console.log('Under limit — send again to reach 5 (then 429 on the 6th)');",
+                  "    console.log('Under limit — send again to reach 25 (then 429 on the 26th)');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -337,7 +337,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "audit"]
             },
-            "description": "Send this request **6 times in a row**. Sends an invalid URL so no PageSpeed quota is burned. Runs 1-5 return `400`. Run 6 returns `429` with `\"You've run several audits recently. Try again in an hour.\"`\n\nTo reset the counter: restart the dev server (the limiter is in-memory)."
+            "description": "Send this request **26 times in a row**. Sends an invalid URL so no PageSpeed quota is burned. Runs 1-25 return `400`. Run 26 returns `429` with `\"You've run several audits recently. Try again in an hour.\"`\n\nTo reset the counter: restart the dev server (the limiter is in-memory)."
           }
         }
       ]
