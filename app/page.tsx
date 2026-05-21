@@ -3,6 +3,7 @@
 import { useAudit } from '@/lib/hooks/useAudit';
 import { AuditInput } from '@/components/audit/AuditInput';
 import { AuditReport } from '@/components/audit/AuditReport';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function HomePage() {
   const { state, runAudit, reset } = useAudit();
@@ -13,46 +14,53 @@ export default function HomePage() {
 
       {/* ── Top bar ──────────────────────────────────────────────────────── */}
       <header
-        className="sticky top-0 z-10 px-4 sm:px-6 py-3 flex items-center gap-4"
+        className="sticky top-0 z-10"
         style={{
           background: 'var(--wb-bg)',
           borderBottom: '1px solid var(--wb-border)',
         }}
       >
-        {/* Logo */}
-        <a
-          href="https://webbeet.studio"
-          className="text-sm font-bold tracking-tight shrink-0"
-          style={{ color: 'var(--wb-text)' }}
-        >
-          web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
-          <span className="ml-1.5 text-xs font-normal" style={{ color: 'var(--wb-muted)' }}>
-            UX Audit
-          </span>
-        </a>
+        {/* Inner wrapper — same width constraint as <main> */}
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-3 flex items-center gap-3">
 
-        {/* URL input — fills the header */}
-        <div className="flex-1 max-w-2xl">
-          <AuditInput
-            onSubmit={runAudit}
-            onReset={reset}
-            status={state.status}
-            error={null}
-            currentUrl={state.url}
-          />
-        </div>
+          {/* Logo */}
+          <a
+            href="https://webbeet.studio"
+            className="text-sm font-bold tracking-tight shrink-0"
+            style={{ color: 'var(--wb-text)' }}
+          >
+            web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
+            <span className="ml-1.5 text-xs font-normal" style={{ color: 'var(--wb-muted)' }}>
+              UX Audit
+            </span>
+          </a>
 
-        {/* Stats strip */}
-        <div className="hidden lg:flex items-center gap-5 shrink-0">
-          {[
-            { v: '51', l: 'checks' },
-            { v: '6',  l: 'categories' },
-          ].map(({ v, l }) => (
-            <div key={l} className="flex items-baseline gap-1">
-              <span className="text-sm font-bold font-mono" style={{ color: 'var(--wb-accent)' }}>{v}</span>
-              <span className="text-xs" style={{ color: 'var(--wb-muted)' }}>{l}</span>
-            </div>
-          ))}
+          {/* URL input — fills available space */}
+          <div className="flex-1">
+            <AuditInput
+              onSubmit={runAudit}
+              onReset={reset}
+              status={state.status}
+              error={null}
+              currentUrl={state.url}
+            />
+          </div>
+
+          {/* Stats strip */}
+          <div className="hidden lg:flex items-center gap-5 shrink-0">
+            {[
+              { v: '51', l: 'checks' },
+              { v: '6',  l: 'categories' },
+            ].map(({ v, l }) => (
+              <div key={l} className="flex items-baseline gap-1">
+                <span className="text-sm font-bold font-mono" style={{ color: 'var(--wb-accent)' }}>{v}</span>
+                <span className="text-xs" style={{ color: 'var(--wb-muted)' }}>{l}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Theme toggle */}
+          <ThemeToggle />
         </div>
       </header>
 

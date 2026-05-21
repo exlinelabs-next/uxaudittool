@@ -2,6 +2,7 @@ import { getAuditResult } from '@/lib/audit/store';
 import { SummaryPanel } from '@/components/audit/SummaryPanel';
 import { CategoryAccordion } from '@/components/audit/CategoryAccordion';
 import { AuditCTA } from '@/components/audit/AuditCTA';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { AuditCategories } from '@/lib/audit/types';
 import type { Metadata } from 'next';
 
@@ -47,20 +48,23 @@ export default async function AuditReportPage({ params }: Props) {
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--wb-bg)' }}>
       {/* Header */}
       <header
-        className="sticky top-0 z-10 px-4 sm:px-6 py-3 flex items-center gap-4"
+        className="sticky top-0 z-10"
         style={{ background: 'var(--wb-bg)', borderBottom: '1px solid var(--wb-border)' }}
       >
-        <a href="/" className="text-sm font-bold tracking-tight shrink-0" style={{ color: 'var(--wb-text)' }}>
-          web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
-          <span className="ml-1.5 text-xs font-normal" style={{ color: 'var(--wb-muted)' }}>UX Audit</span>
-        </a>
-        <a
-          href="/"
-          className="ml-auto px-3 py-1.5 rounded text-xs font-medium transition-opacity hover:opacity-80"
-          style={{ background: 'var(--wb-surface)', border: '1px solid var(--wb-border)', color: 'var(--wb-muted)' }}
-        >
-          Run new audit
-        </a>
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-3 flex items-center gap-3">
+          <a href="/" className="text-sm font-bold tracking-tight shrink-0" style={{ color: 'var(--wb-text)' }}>
+            web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
+            <span className="ml-1.5 text-xs font-normal" style={{ color: 'var(--wb-muted)' }}>UX Audit</span>
+          </a>
+          <a
+            href="/"
+            className="ml-auto px-3 py-1.5 rounded text-xs font-medium transition-opacity hover:opacity-80"
+            style={{ background: 'var(--wb-surface)', border: '1px solid var(--wb-border)', color: 'var(--wb-muted)' }}
+          >
+            Run new audit
+          </a>
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* Main content */}

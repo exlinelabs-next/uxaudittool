@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
-/* ── Brand tokens — edit here to reskin the entire UI ───────────────────── */
-:root {
+/* ── Brand tokens — dark mode (default) ─────────────────────────────────── */
+:root, [data-theme="dark"] {
   --wb-accent:    #C8F135;   /* lime — CTA buttons only                    */
   --wb-bg:        #09090b;   /* page background                            */
   --wb-surface:   #111114;   /* panel / card surface                       */
@@ -11,11 +11,29 @@
   --wb-muted:     #6b6b72;   /* secondary / label text                     */
   --wb-dim:       #3a3a3f;   /* very muted (track bars, disabled)          */
 
-  /* Status colours — used for dots, badges and score bars */
+  /* Status colours */
   --wb-critical:  #f04545;   /* fail                                       */
   --wb-warning:   #e8930a;   /* warning                                    */
   --wb-pass:      #3ecf73;   /* pass                                       */
   --wb-info:      #5b8dee;   /* informational                              */
+}
+
+/* ── Brand tokens — light mode ───────────────────────────────────────────── */
+[data-theme="light"] {
+  --wb-accent:    #5a9e00;   /* darker lime — legible on white             */
+  --wb-bg:        #f4f4f5;
+  --wb-surface:   #ffffff;
+  --wb-surface-2: #f1f1f4;
+  --wb-border:    #e4e4e7;
+  --wb-text:      #18181b;
+  --wb-muted:     #71717a;
+  --wb-dim:       #d4d4d8;
+
+  /* Status colours (slightly deeper for light bg) */
+  --wb-critical:  #dc2626;
+  --wb-warning:   #d97706;
+  --wb-pass:      #16a34a;
+  --wb-info:      #2563eb;
 }
 
 @theme inline {
@@ -39,3 +57,6 @@ html, body {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--wb-bg); }
 ::-webkit-scrollbar-thumb { background: var(--wb-border); border-radius: 3px; }
+
+/* Shared keyframes */
+@keyframes spin { to { transform: rotate(360deg); } }

@@ -3,6 +3,7 @@ import type { AuditCategories } from '@/lib/audit/types';
 import { SummaryPanel } from './SummaryPanel';
 import { CategoryAccordion, CategoryAccordionSkeleton } from './CategoryAccordion';
 import { AuditCTA } from './AuditCTA';
+import { AuditProgress } from './AuditProgress';
 
 const FAST_CATS  = ['seo', 'trust', 'ux'] as const;
 const SLOW_CATS  = ['performance', 'mobile', 'accessibility'] as const;
@@ -40,6 +41,9 @@ export function AuditReport({ state, ctaHref, ctaLabel }: AuditReportProps) {
         shareUrl={result?.shareUrl}
         isPartial={status === 'partial'}
       />
+
+      {/* Phase 2 progress indicator — shown while performance/mobile/a11y are loading */}
+      {status === 'partial' && <AuditProgress />}
 
       {/* Accordion sections */}
       <div className="flex flex-col gap-2 mt-1">
