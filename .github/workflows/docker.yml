@@ -32,8 +32,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/exline-labs/webeet-ux-research-tool:latest
-            ghcr.io/exline-labs/webeet-ux-research-tool:${{ github.sha }}
+            ghcr.io/exline-labs/webbeet-ux-audit-tool:latest
+            ghcr.io/exline-labs/webbeet-ux-audit-tool:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_BASE_URL=https://ux-audit.exlinelabs.co.uk
           cache-from: type=gha
