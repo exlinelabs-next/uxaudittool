@@ -108,5 +108,45 @@ export function runUxChecks($: CheerioAPI): CategoryResult {
       'Testimonials, reviews, or client logos build trust and increase conversion rates.',
   });
 
+  // --- Social media links ---
+  const socialPatterns = /facebook\.com|twitter\.com|x\.com|linkedin\.com|instagram\.com|youtube\.com|tiktok\.com/i;
+  const socialLinks: string[] = [];
+  $('a[href]').each((_, el) => {
+    const href = $(el).attr('href') ?? '';
+    if (socialPatterns.test(href)) {
+      const match = href.match(/(?:facebook|twitter|x\.com|linkedin|instagram|youtube|tiktok)/i);
+      if (match && !socialLinks.includes(match[0].toLowerCase())) {
+        socialLinks.push(match[0].toLowerCase());
+      }
+    }
+  });
+
+  checks.push({
+    id: 'social-links',
+    label: 'Social media links',
+    value: socialLinks.length > 0 ? socialLinks.join(', ') : 'None found',
+    status: socialLinks.length > 0 ? 'pass' : 'warning',
+    description:
+      'Links to social profiles show an active online presence and give visitors more ways to connect.',
+  });
+
+  // --- Live chat widget ---
+  const chatPatterns =
+    /intercom|drift|crisp|freshchat|tidio|zendesk|hubspot|tawk|livechat|olark/i;
+  const hasChatScript = $('script[src]').toArray().some(el =>
+    chatPatterns.test($(el).attr('src') ?? '')
+  );
+  const hasChatId = $('[id*="intercom"],[id*="drift"],[id*="crisp"],[class*="chat-widget"],[id*="tidio"],[id*="tawk"]').length > 0;
+  const hasChat = hasChatScript || hasChatId;
+
+  checks.push({
+    id: 'live-chat',
+    label: 'Live chat / support widget',
+    value: hasChat ? 'Detected' : 'Not detected',
+    status: hasChat ? 'pass' : 'warning',
+    description:
+      'Live chat tools (Intercom, Drift, Crisp etc.) can significantly improve conversion rates.',
+  });
+
   return { score: categoryScore(checks), checks };
 }

@@ -124,5 +124,61 @@ export function runSeoChecks($: CheerioAPI): CategoryResult {
       'A noindex directive prevents search engines from indexing this page.',
   });
 
+  // --- Twitter Card tags ---
+  const twitterCard = $('meta[name="twitter:card"]').attr('content')?.trim();
+  const twitterTitle = $('meta[name="twitter:title"]').attr('content')?.trim();
+  const twitterDesc = $('meta[name="twitter:description"]').attr('content')?.trim();
+  const twitterComplete = !!(twitterCard && twitterTitle && twitterDesc);
+  const twitterPartial = !!(twitterCard || twitterTitle || twitterDesc);
+
+  checks.push({
+    id: 'twitter-card',
+    label: 'Twitter Card tags',
+    value: twitterComplete
+      ? 'twitter:card, title and description present'
+      : twitterPartial
+        ? 'Partially configured'
+        : 'Not found',
+    status: twitterComplete ? 'pass' : twitterPartial ? 'warning' : 'warning',
+    description:
+      'Twitter Card tags control how your page looks when shared on X / Twitter.',
+  });
+
+  // --- Favicon ---
+  const hasFavicon =
+    $('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').length > 0;
+
+  checks.push({
+    id: 'favicon',
+    label: 'Favicon',
+    value: hasFavicon ? 'Found' : 'Not found',
+    status: hasFavicon ? 'pass' : 'warning',
+    description:
+      'A favicon appears in browser tabs and bookmarks, reinforcing brand recognition.',
+  });
+
+  // --- Image alt text coverage ---
+  const allImages = $('img');
+  const totalImages = allImages.length;
+  const missingAlt = allImages.filter((_, el) => !$(el).attr('alt')).length;
+  const altCoverage = totalImages === 0 ? null : Math.round(((totalImages - missingAlt) / totalImages) * 100);
+
+  checks.push({
+    id: 'image-alt-coverage',
+    label: 'Image alt text coverage',
+    value: totalImages === 0
+      ? 'No images found'
+      : `${altCoverage}% (${missingAlt} of ${totalImages} missing)`,
+    status: totalImages === 0
+      ? 'pass'
+      : missingAlt === 0
+        ? 'pass'
+        : missingAlt <= 2
+          ? 'warning'
+          : 'fail',
+    description:
+      'Alt text on images is essential for SEO and screen reader accessibility.',
+  });
+
   return { score: categoryScore(checks), checks };
 }
