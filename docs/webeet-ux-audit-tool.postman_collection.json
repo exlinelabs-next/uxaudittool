@@ -2,20 +2,21 @@
   "info": {
     "_postman_id": "a3f2c1d4-8b7e-4f9a-bc12-3e5d7a9f0123",
     "name": "Webbeet UX Audit Tool",
-    "description": "# Webbeet UX Audit Tool API\n\nPublic-facing audit tool that scores a website across 6 categories: Performance, SEO, Trust, UX Signals, Mobile, and Accessibility.\n\n## Environments\n\nSwitch between environments using the environment selector:\n- **Local** - `http://localhost:3000` (dev server)\n- **Production** - Railway URL (set after Day 5 deploy)\n\n## The one endpoint\n\n`POST /api/audit` - Submit a URL, get back a full scored report.\n\n## Response shape\n\n```json\n{\n  \"url\": \"https://example.com\",\n  \"scannedAt\": \"2026-05-20T09:00:00Z\",\n  \"overallScore\": 72,\n  \"categories\": {\n    \"performance\": { \"score\": 65, \"checks\": [...] },\n    \"seo\":         { \"score\": 90, \"checks\": [...] },\n    \"trust\":       { \"score\": 75, \"checks\": [...] },\n    \"ux\":          { \"score\": 70, \"checks\": [...] },\n    \"mobile\":      { \"score\": 80, \"checks\": [...] },\n    \"accessibility\": { \"score\": 55, \"checks\": [...] }\n  }\n}\n```\n\n## Check status values\n- `pass` - all good\n- `warning` - needs attention\n- `fail` - significant issue\n\n## Score bands\n- 80-100 - Good (green)\n- 50-79 - Needs work (amber)\n- 0-49 - Poor (red)",
+    "description": "# Webbeet UX Audit Tool API\n\nScores a website across 6 categories: Performance, SEO, Trust, UX Signals, Mobile, and Accessibility.\n\n---\n\n## ⚠️ Important: Postman timeout\n\nGo to **Postman Settings → General → Request timeout** and set it to **120000** (120s). The audit can take 40-90s for larger sites.\n\n---\n\n## Streaming response format\n\nSuccessful audits return `text/event-stream` (Server-Sent Events). The response body contains two events:\n\n```\ndata: {\"type\":\"partial\",\"categories\":{\"seo\":{...},\"trust\":{...},\"ux\":{...}}}\n\ndata: {\"type\":\"complete\",\"categories\":{\"performance\":{...},\"mobile\":{...},\"accessibility\":{...}},\"overallScore\":72,\"shareId\":\"abc123\",\"scannedAt\":\"...\"}\n```\n\n**Phase 1 - partial** (~3-5s): Fast HTML-based checks: SEO (13), Trust (7), UX (9) = 29 checks.\n\n**Phase 2 - complete** (~15-90s): PageSpeed + accessibility checks: Performance (8), Mobile (6), Accessibility (8) = 22 checks.\n\nTotal across both phases = **51 checks**.\n\n---\n\n## Error responses (plain JSON - before stream starts)\n\n```json\n{ \"error\": \"Please enter a valid website URL including https://\" }\n```\n\nStatus codes: `400` (bad input), `422` (unreachable/blocked), `429` (rate limited)\n\n---\n\n## Check status values\n- `pass` - all good\n- `warning` - needs attention  \n- `fail` - significant issue\n\n## Score bands\n- 80-100 - Good\n- 50-79 - Needs work\n- 0-49 - Poor",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "base_url",
       "value": "http://localhost:3000",
-      "type": "string"
+      "type": "string",
+      "description": "Switch to https://ux-audit.exlinelabs.co.uk for production"
     }
   ],
   "item": [
     {
       "name": "Happy Path",
-      "description": "Successful audit requests against real URLs.",
+      "description": "Successful audits. Response is SSE (text/event-stream) - two data: lines containing JSON events.",
       "item": [
         {
           "name": "Audit - webbeet.studio",
@@ -24,47 +25,91 @@
               "listen": "test",
               "script": {
                 "exec": [
+                  "// ── Parse SSE events from response body ───────────────────",
+                  "// The API returns text/event-stream with two events:",
+                  "//   data: {type:'partial', categories:{seo,trust,ux}}",
+                  "//   data: {type:'complete', categories:{performance,mobile,accessibility}, overallScore, shareId}",
+                  "",
+                  "const text = pm.response.text();",
+                  "const events = [];",
+                  "text.split('\\n').forEach(line => {",
+                  "    if (line.startsWith('data: ')) {",
+                  "        try { events.push(JSON.parse(line.slice(6))); } catch(e) {}",
+                  "    }",
+                  "});",
+                  "",
+                  "const partial  = events.find(e => e.type === 'partial');",
+                  "const complete = events.find(e => e.type === 'complete');",
+                  "",
+                  "// ── Response shape ────────────────────────────────────────",
                   "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type is text/event-stream', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/event-stream');",
+                  "});",
+                  "pm.test('Got partial event (Phase 1 - HTML checks)', () => {",
+                  "    pm.expect(partial).to.not.be.undefined;",
+                  "});",
+                  "pm.test('Got complete event (Phase 2 - PageSpeed + a11y)', () => {",
+                  "    pm.expect(complete).to.not.be.undefined;",
+                  "});",
                   "",
-                  "const json = pm.response.json();",
-                  "",
-                  "pm.test('Has url field', () => pm.expect(json).to.have.property('url'));",
-                  "pm.test('Has scannedAt field', () => pm.expect(json).to.have.property('scannedAt'));",
-                  "pm.test('overallScore is a number 0-100', () => {",
-                  "  pm.expect(json.overallScore).to.be.a('number');",
-                  "  pm.expect(json.overallScore).to.be.within(0, 100);",
-                  "});",
-                  "pm.test('Has all 6 categories', () => {",
-                  "  const cats = Object.keys(json.categories);",
-                  "  ['performance','seo','trust','ux','mobile','accessibility'].forEach(c => {",
-                  "    pm.expect(cats).to.include(c);",
-                  "  });",
-                  "});",
-                  "pm.test('Each category has score and checks', () => {",
-                  "  Object.values(json.categories).forEach(cat => {",
-                  "    pm.expect(cat).to.have.property('score');",
-                  "    pm.expect(cat).to.have.property('checks');",
-                  "  });",
-                  "});",
-                  "pm.test('Each check has required fields', () => {",
-                  "  Object.values(json.categories).forEach(cat => {",
-                  "    cat.checks.forEach(check => {",
-                  "      pm.expect(check).to.have.property('id');",
-                  "      pm.expect(check).to.have.property('label');",
-                  "      pm.expect(check).to.have.property('value');",
-                  "      pm.expect(check).to.have.property('status');",
-                  "      pm.expect(check).to.have.property('description');",
-                  "      pm.expect(['pass','warning','fail']).to.include(check.status);",
+                  "// ── Phase 1 checks ────────────────────────────────────────",
+                  "if (partial) {",
+                  "    pm.test('Partial has seo, trust, ux categories', () => {",
+                  "        ['seo','trust','ux'].forEach(c => {",
+                  "            pm.expect(partial.categories).to.have.property(c);",
+                  "        });",
                   "    });",
-                  "  });",
-                  "});",
+                  "    pm.test('Partial has 29 checks total', () => {",
+                  "        const total = Object.values(partial.categories)",
+                  "            .reduce((n, cat) => n + (cat.checks ? cat.checks.length : 0), 0);",
+                  "        pm.expect(total).to.equal(29);",
+                  "    });",
+                  "}",
                   "",
-                  "// Log scores for quick review",
-                  "console.log('Overall:', json.overallScore);",
-                  "Object.entries(json.categories).forEach(([k,v]) => {",
-                  "  const flag = v.unavailable ? '(unavailable)' : '';",
-                  "  console.log(` ${k}: ${v.score} ${flag}`);",
-                  "});"
+                  "// ── Phase 2 checks ────────────────────────────────────────",
+                  "if (complete) {",
+                  "    pm.test('Complete has performance, mobile, accessibility', () => {",
+                  "        ['performance','mobile','accessibility'].forEach(c => {",
+                  "            pm.expect(complete.categories).to.have.property(c);",
+                  "        });",
+                  "    });",
+                  "    pm.test('overallScore is 0-100', () => {",
+                  "        pm.expect(complete.overallScore).to.be.a('number');",
+                  "        pm.expect(complete.overallScore).to.be.within(0, 100);",
+                  "    });",
+                  "    pm.test('scannedAt is present', () => {",
+                  "        pm.expect(complete.scannedAt).to.be.a('string');",
+                  "    });",
+                  "    pm.test('shareId returned (Supabase connected)', () => {",
+                  "        // Will pass only if Supabase env vars are set",
+                  "        pm.expect(complete.shareId).to.be.a('string');",
+                  "    });",
+                  "    pm.test('Each check has id, label, value, status, description', () => {",
+                  "        Object.values(complete.categories).forEach(cat => {",
+                  "            if (!cat.checks) return;",
+                  "            cat.checks.forEach(check => {",
+                  "                pm.expect(check).to.have.all.keys('id','label','value','status','description');",
+                  "                pm.expect(['pass','warning','fail']).to.include(check.status);",
+                  "            });",
+                  "        });",
+                  "    });",
+                  "}",
+                  "",
+                  "// ── Console summary ───────────────────────────────────────",
+                  "if (complete) {",
+                  "    console.log('Overall score:', complete.overallScore);",
+                  "    if (partial) {",
+                  "        Object.entries(partial.categories).forEach(([k,v]) => {",
+                  "            console.log(' [phase1]', k + ':', v.score, '(' + (v.checks||[]).length + ' checks)');",
+                  "        });",
+                  "    }",
+                  "    Object.entries(complete.categories).forEach(([k,v]) => {",
+                  "        const tag = v.unavailable ? '(unavailable)' : '(' + (v.checks||[]).length + ' checks)';",
+                  "        console.log(' [phase2]', k + ':', v.unavailable ? 'N/A' : v.score, tag);",
+                  "    });",
+                  "    console.log('shareId:', complete.shareId || 'none (Supabase not connected)');",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -72,44 +117,53 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"url\": \"https://webbeet.studio\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/api/audit",
               "host": ["{{base_url}}"],
               "path": ["api", "audit"]
             },
-            "description": "Full audit of webbeet.studio - the Webbeet homepage. Useful as a baseline benchmark."
+            "description": "Full audit of webbeet.studio. Expect two SSE events in the response body - partial (Phase 1, ~5s) and complete (Phase 2, ~20s). Overall 51 checks across 6 categories."
           }
         },
         {
-          "name": "Audit - example.com (fast, minimal)",
+          "name": "Audit - stripe.com (medium complexity)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
-                  "const json = pm.response.json();",
-                  "pm.test('example.com should score well', () => {",
-                  "  pm.expect(json.overallScore).to.be.above(70);",
+                  "const text = pm.response.text();",
+                  "const events = [];",
+                  "text.split('\\n').forEach(line => {",
+                  "    if (line.startsWith('data: ')) {",
+                  "        try { events.push(JSON.parse(line.slice(6))); } catch(e) {}",
+                  "    }",
                   "});",
-                  "pm.test('Not timed out', () => {",
-                  "  pm.expect(json.timedOut).to.be.undefined;",
-                  "});"
+                  "const partial  = events.find(e => e.type === 'partial');",
+                  "const complete = events.find(e => e.type === 'complete');",
+                  "",
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Got both SSE events', () => {",
+                  "    pm.expect(partial).to.not.be.undefined;",
+                  "    pm.expect(complete).to.not.be.undefined;",
+                  "});",
+                  "pm.test('overallScore is a number', () => {",
+                  "    pm.expect(complete?.overallScore).to.be.a('number');",
+                  "});",
+                  "",
+                  "if (complete) {",
+                  "    console.log('stripe.com overall:', complete.overallScore);",
+                  "    if (partial) Object.entries(partial.categories).forEach(([k,v]) => console.log(' [phase1]', k + ':', v.score));",
+                  "    Object.entries(complete.categories).forEach(([k,v]) => {",
+                  "        console.log(' [phase2]', k + ':', v.unavailable ? 'unavailable' : v.score);",
+                  "    });",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -117,42 +171,100 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"url\": \"https://example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"url\": \"https://stripe.com\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/api/audit",
               "host": ["{{base_url}}"],
               "path": ["api", "audit"]
             },
-            "description": "Minimal HTML-only page. Fast to audit, useful for checking all 6 categories return data correctly."
+            "description": "Medium-complexity site. Expect 51 checks. PageSpeed typically takes 35-55s for Stripe."
           }
         },
         {
-          "name": "Audit - HTTP (not HTTPS)",
+          "name": "Audit - github.com (large/heavy site)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
+                  "const text = pm.response.text();",
+                  "const events = [];",
+                  "text.split('\\n').forEach(line => {",
+                  "    if (line.startsWith('data: ')) {",
+                  "        try { events.push(JSON.parse(line.slice(6))); } catch(e) {}",
+                  "    }",
+                  "});",
+                  "const partial  = events.find(e => e.type === 'partial');",
+                  "const complete = events.find(e => e.type === 'complete');",
+                  "",
                   "pm.test('Status is 200', () => pm.response.to.have.status(200));",
-                  "const json = pm.response.json();",
-                  "pm.test('HTTPS trust check should fail', () => {",
-                  "  const trustChecks = json.categories.trust?.checks ?? [];",
-                  "  const httpsCheck = trustChecks.find(c => c.id === 'https');",
-                  "  if (httpsCheck) pm.expect(httpsCheck.status).to.equal('fail');",
+                  "pm.test('Phase 1 (HTML checks) always arrives', () => {",
+                  "    pm.expect(partial).to.not.be.undefined;",
+                  "    const checks = Object.values(partial?.categories || {})",
+                  "        .reduce((n, c) => n + (c.checks||[]).length, 0);",
+                  "    pm.expect(checks).to.equal(29);",
+                  "});",
+                  "pm.test('Phase 2 arrives (PageSpeed may mark performance as unavailable for very large sites)', () => {",
+                  "    pm.expect(complete).to.not.be.undefined;",
+                  "});",
+                  "",
+                  "if (complete) {",
+                  "    const perf = complete.categories?.performance;",
+                  "    if (perf?.unavailable) {",
+                  "        console.log('Performance: unavailable (PageSpeed timed out for this site - normal for very large sites)');",
+                  "    } else {",
+                  "        console.log('Performance score:', perf?.score);",
+                  "    }",
+                  "    console.log('Overall score:', complete.overallScore, '(calculated from available categories)');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"url\": \"https://github.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/audit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "audit"]
+            },
+            "description": "Heavy site - tests that large sites always return Phase 1 results even if PageSpeed is slow. Performance/mobile may show as 'unavailable' if PageSpeed exceeds its 90s timeout. Increase Postman timeout to 120s in settings."
+          }
+        },
+        {
+          "name": "Audit - HTTP site (HTTPS check should fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const text = pm.response.text();",
+                  "const events = [];",
+                  "text.split('\\n').forEach(line => {",
+                  "    if (line.startsWith('data: ')) {",
+                  "        try { events.push(JSON.parse(line.slice(6))); } catch(e) {}",
+                  "    }",
+                  "});",
+                  "const partial = events.find(e => e.type === 'partial');",
+                  "",
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('HTTPS trust check is fail', () => {",
+                  "    const trustChecks = partial?.categories?.trust?.checks ?? [];",
+                  "    const httpsCheck = trustChecks.find(c => c.id === 'https');",
+                  "    pm.expect(httpsCheck, 'https check missing').to.not.be.undefined;",
+                  "    pm.expect(httpsCheck?.status).to.equal('fail');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -161,34 +273,25 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"url\": \"http://example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"url\": \"http://neverssl.com\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/api/audit",
               "host": ["{{base_url}}"],
               "path": ["api", "audit"]
             },
-            "description": "Tests that HTTP (non-secure) sites are audited and the HTTPS trust check correctly fails."
+            "description": "neverssl.com is a real HTTP-only site kept intentionally unsecure. The trust category's 'https' check should have status:'fail'."
           }
         }
       ]
     },
     {
       "name": "Error Cases",
-      "description": "All the ways a request can fail - each should return a user-friendly error message.",
+      "description": "All the ways a request can fail. These errors fire BEFORE the stream starts, so responses are plain JSON (not SSE).",
       "item": [
         {
           "name": "No URL field",
@@ -198,10 +301,10 @@
               "script": {
                 "exec": [
                   "pm.test('Status is 400', () => pm.response.to.have.status(400));",
-                  "pm.test('Returns error message', () => {",
-                  "  const json = pm.response.json();",
-                  "  pm.expect(json).to.have.property('error');",
-                  "  pm.expect(json.error).to.include('https');",
+                  "pm.test('Returns error message mentioning https', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('error');",
+                  "    pm.expect(json.error).to.include('https');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -210,20 +313,11 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/api/audit",
@@ -242,8 +336,8 @@
                 "exec": [
                   "pm.test('Status is 400', () => pm.response.to.have.status(400));",
                   "pm.test('Returns user-friendly error', () => {",
-                  "  const json = pm.response.json();",
-                  "  pm.expect(json.error).to.include('https');",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.error).to.include('https');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -252,27 +346,18 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"url\": \"webbeet.studio\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/api/audit",
               "host": ["{{base_url}}"],
               "path": ["api", "audit"]
             },
-            "description": "Missing http/https prefix. Expected: 400 - \"Please enter a valid website URL including https://\""
+            "description": "Missing http/https prefix. Expected: 400"
           }
         },
         {
@@ -283,9 +368,9 @@
               "script": {
                 "exec": [
                   "pm.test('Status is 400', () => pm.response.to.have.status(400));",
-                  "pm.test('Returns user-friendly error', () => {",
-                  "  const json = pm.response.json();",
-                  "  pm.expect(json).to.have.property('error');",
+                  "pm.test('Returns error', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('error');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -294,27 +379,18 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"url\": \"not a url at all!!\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/api/audit",
               "host": ["{{base_url}}"],
               "path": ["api", "audit"]
             },
-            "description": "Expected: 400 - \"Please enter a valid website URL including https://\""
+            "description": "Expected: 400"
           }
         },
         {
@@ -326,8 +402,8 @@
                 "exec": [
                   "pm.test('Status is 400', () => pm.response.to.have.status(400));",
                   "pm.test('Returns error about invalid body', () => {",
-                  "  const json = pm.response.json();",
-                  "  pm.expect(json.error).to.include('Invalid');",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.error).to.include('Invalid');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -336,20 +412,11 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "this is not json",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/api/audit",
@@ -368,8 +435,8 @@
                 "exec": [
                   "pm.test('Status is 422', () => pm.response.to.have.status(422));",
                   "pm.test('Returns unreachable error', () => {",
-                  "  const json = pm.response.json();",
-                  "  pm.expect(json.error).to.include(\"couldn't reach\");",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.error).to.include(\"couldn't reach\");",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -378,20 +445,11 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"url\": \"https://this-domain-does-not-exist-xyz99abc.io\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/api/audit",
@@ -422,35 +480,37 @@
               "host": ["{{base_url}}"],
               "path": ["api", "audit"]
             },
-            "description": "GET is not supported. Expected: 405 Method Not Allowed (Next.js native behaviour)."
+            "description": "GET is not supported. Expected: 405 Method Not Allowed."
           }
         }
       ]
     },
     {
       "name": "Rate Limiting",
-      "description": "The API allows 5 audits per IP per hour. The 6th request returns 429.",
+      "description": "5 audits per IP per hour. The 6th request returns 429. Rate limit fires before the stream starts so the response is plain JSON.",
       "item": [
         {
-          "name": "Trigger rate limit (run 6 times)",
+          "name": "Trigger rate limit (send 6 times)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "// On the 6th+ run this should 429",
-                  "// On runs 1-5 it will 400 (invalid URL kept intentionally to not burn PageSpeed quota)",
+                  "// Rate limit check fires before stream - response is plain JSON",
                   "const status = pm.response.code;",
-                  "pm.test('Either 400 (under limit) or 429 (over limit)', () => {",
-                  "  pm.expect([400, 429]).to.include(status);",
+                  "",
+                  "pm.test('Either 400 (under limit) or 429 (rate limited)', () => {",
+                  "    pm.expect([400, 429]).to.include(status);",
                   "});",
                   "",
                   "if (status === 429) {",
-                  "  pm.test('429 has user-friendly message', () => {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.error).to.include('hour');",
-                  "  });",
-                  "  console.log('Rate limit hit - working correctly');",
+                  "    pm.test('429 has user-friendly message mentioning hour', () => {",
+                  "        const json = pm.response.json();",
+                  "        pm.expect(json.error).to.include('hour');",
+                  "    });",
+                  "    console.log('Rate limit hit - working correctly');",
+                  "} else {",
+                  "    console.log('Under rate limit - send this request again to build up to 5');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -459,27 +519,18 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"url\": \"not-a-url\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/api/audit",
               "host": ["{{base_url}}"],
               "path": ["api", "audit"]
             },
-            "description": "Send this request 6+ times. Runs 1-5 return 400 (invalid URL). Run 6+ returns 429 with the rate limit message.\n\nNote: rate limit is per IP per hour. Restart the dev server to reset."
+            "description": "Send this 6+ times. Runs 1-5 return 400 (invalid URL - no PageSpeed quota burned). Run 6+ returns 429.\n\nTo reset: restart the dev server (rate limit is in-memory)."
           }
         }
       ]
