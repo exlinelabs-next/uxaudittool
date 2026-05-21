@@ -16,11 +16,15 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
   const isRunning = status === 'loading' || status === 'partial';
   const hasResult = status === 'partial' || status === 'complete';
 
+  const isLocalhost = /^(localhost|127\.0\.0\.1)(:\d+)?/.test(value.trim());
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!value.trim() || isRunning) return;
     let url = value.trim();
-    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = (isLocalhost ? 'http://' : 'https://') + url;
+    }
     onSubmit(url);
   }
 
@@ -44,7 +48,7 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
               background: 'var(--wb-surface-2)',
             }}
           >
-            https://
+            {isLocalhost ? 'http://' : 'https://'}
           </span>
 
           {/* Input */}

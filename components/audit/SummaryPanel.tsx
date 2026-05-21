@@ -1,6 +1,6 @@
 import { ScoreBar, ScoreNumber, scoreLabel } from './ScoreBar';
 import { RadarChart } from './RadarChart';
-import { trackShareCopied } from '@/lib/analytics';
+import { downloadMarkdown, exportPdf } from '@/lib/export';
 import type { AuditCategories } from '@/lib/audit/types';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -15,9 +15,10 @@ interface SummaryPanelProps {
   scannedAt?: string;
   shareUrl?: string;
   isPartial?: boolean;
+  onRerun?: () => void;
 }
 
-export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUrl, isPartial }: SummaryPanelProps) {
+export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUrl: _shareUrl, isPartial, onRerun }: SummaryPanelProps) {
   const scores: Partial<Record<string, number>> = {};
   let totalChecks = 0, totalFail = 0, totalWarn = 0, totalPass = 0;
 
@@ -55,19 +56,50 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
             Loading performance data...
           </span>
         )}
-        {shareUrl && (
+        {/* Export + Re-run actions */}
+        <div className="ml-auto flex items-center gap-1.5 no-print">
+          {/* Markdown export */}
           <button
-            onClick={() => { navigator.clipboard.writeText(shareUrl); trackShareCopied(); }}
-            className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded transition-opacity hover:opacity-80"
-            style={{ background: 'var(--wb-border)', color: 'var(--wb-muted)' }}
+            onClick={() => downloadMarkdown(url, overallScore, categories, scannedAt)}
+            className="flex items-center gap-1 px-2 py-1 rounded transition-opacity hover:opacity-80"
+            style={{ background: 'var(--wb-border)', color: 'var(--wb-muted)', fontSize: 11, fontWeight: 600 }}
+            title="Download as Markdown"
           >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-              <path d="M3 8H2a1 1 0 01-1-1V2a1 1 0 011-1h5a1 1 0 011 1v1" stroke="currentColor" strokeWidth="1.2"/>
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v7M3 5l3 3 3-3M2 10h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Copy share link
+            .md
           </button>
-        )}
+
+          {/* PDF export */}
+          <button
+            onClick={exportPdf}
+            className="flex items-center gap-1 px-2 py-1 rounded transition-opacity hover:opacity-80"
+            style={{ background: 'var(--wb-border)', color: 'var(--wb-muted)', fontSize: 11, fontWeight: 600 }}
+            title="Save as PDF"
+          >
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v7M3 5l3 3 3-3M2 10h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            PDF
+          </button>
+
+          {/* Re-run */}
+          {onRerun && (
+            <button
+              onClick={onRerun}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded transition-opacity hover:opacity-80"
+              style={{ background: 'var(--wb-accent)', color: '#000', fontSize: 11, fontWeight: 700 }}
+              title="Re-run audit"
+            >
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                <path d="M10.5 2A5 5 0 1 0 11 6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                <path d="M8 2h2.5V4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Re-run
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main content: score left, radar middle, category bars right */}
@@ -101,7 +133,7 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
               </div>
             ))}
           </div>
-          <span className="text-xs" style={{ color: 'var(--wb-dim)' }}>{totalChecks} checks</span>
+          <span className="text-xs" style={{ color: 'var(--wb-muted)' }}>{totalChecks} checks</span>
         </div>
 
         {/* Radar chart */}

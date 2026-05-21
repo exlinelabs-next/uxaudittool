@@ -41,7 +41,7 @@ const CATEGORIES = [
 
 /* ── Page ────────────────────────────────────────────────────────────────── */
 export default function HomePage() {
-  const { state, runAudit, reset } = useAudit();
+  const { state, runAudit, retrySlowPhase, reset } = useAudit();
   const startedAt = useRef<number>(0);
 
   // Drive every animation from this single boolean
@@ -75,18 +75,20 @@ export default function HomePage() {
           className="max-w-5xl mx-auto w-full px-4 sm:px-6 flex items-center gap-3"
           style={{ height: 52 }}
         >
-          {/* Logo */}
-          <a
-            href="/"
-            style={{ color: 'var(--wb-text)', textDecoration: 'none', flexShrink: 0 }}
-          >
-            <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>
-              web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
-            </span>
-            <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 400, color: 'var(--wb-muted)' }}>
-              UX Audit
-            </span>
-          </a>
+          {/* Logo / primary nav */}
+          <nav aria-label="Main navigation">
+            <a
+              href="/"
+              style={{ color: 'var(--wb-text)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 0 }}
+            >
+              <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>
+                web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
+              </span>
+              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 400, color: 'var(--wb-muted)' }}>
+                UX Audit
+              </span>
+            </a>
+          </nav>
 
           {/*
            * Middle slot - stats and input occupy the same space.
@@ -211,12 +213,25 @@ export default function HomePage() {
                   color: 'var(--wb-muted)',
                   maxWidth: 500,
                   lineHeight: 1.65,
-                  marginBottom: '2.5rem',
+                  marginBottom: '1rem',
                 }}
               >
                 Get a full technical and UX report across{' '}
                 <strong style={{ color: 'var(--wb-text)', fontWeight: 600 }}>51 checks</strong>{' '}
                 in 6 categories. Results stream live - first findings in seconds.
+              </p>
+
+              {/* Social proof + CTA link */}
+              <p style={{ fontSize: 13, color: 'var(--wb-muted)', marginBottom: '1.5rem' }}>
+                Trusted by businesses and developers to identify what is holding their websites back.{' '}
+                <a
+                  href="https://exlinelabs.com/contact"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--wb-accent)', textDecoration: 'underline', textUnderlineOffset: 3, fontWeight: 600 }}
+                >
+                  Book a free discovery call
+                </a>
               </p>
 
               {/*
@@ -256,8 +271,8 @@ export default function HomePage() {
               )}
 
               {/* Trust line */}
-              <p style={{ fontSize: 12, color: 'var(--wb-dim)', marginTop: '1.25rem' }}>
-                Powered by Google PageSpeed Insights + axe-core WCAG engine
+              <p style={{ fontSize: 12, color: 'var(--wb-muted)', marginTop: '1.25rem' }}>
+                Powered by <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Exline Labs</a> - Google PageSpeed Insights + axe-core WCAG engine
               </p>
             </section>
 
@@ -381,7 +396,7 @@ export default function HomePage() {
         )}
 
         {/* Audit report */}
-        <AuditReport state={state} />
+        <AuditReport state={state} onRerun={() => runAudit(state.url)} onRetrySlowPhase={retrySlowPhase} />
       </div>
     </div>
   );
