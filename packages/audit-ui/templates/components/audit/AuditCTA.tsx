@@ -7,27 +7,27 @@ export function AuditCTA({
 }) {
   return (
     <div
-      className="rounded-xl px-6 py-8 flex flex-col items-center text-center gap-4"
-      style={{ background: 'var(--wb-card)', border: '1px solid var(--wb-border)' }}
+      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-5 py-4 rounded"
+      style={{ border: '1px solid var(--wb-border)', background: 'var(--wb-surface)' }}
     >
-      <div className="flex flex-col gap-1">
-        <p className="text-lg font-semibold" style={{ color: 'var(--wb-text)' }}>
-          Want us to fix these issues for you?
+      <div>
+        <p className="text-sm font-medium" style={{ color: 'var(--wb-text)' }}>
+          Want us to fix these issues?
         </p>
-        <p className="text-sm" style={{ color: 'var(--wb-muted)' }}>
-          Our team will walk through your audit and show you exactly how to improve your site.
+        <p className="text-xs mt-0.5" style={{ color: 'var(--wb-muted)' }}>
+          We will walk through your results and build a prioritised action plan.
         </p>
       </div>
       <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm transition-opacity hover:opacity-90 active:scale-95"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded text-xs font-semibold shrink-0 transition-opacity hover:opacity-90"
         style={{ background: 'var(--wb-accent)', color: '#000' }}
       >
         {label}
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </a>
     </div>

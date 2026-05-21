@@ -1,55 +1,127 @@
 'use client';
 
-import { useAudit } from '../lib/hooks/useAudit';
-import { AuditInput } from '../components/audit/AuditInput';
-import { AuditReport } from '../components/audit/AuditReport';
+import { useAudit } from '@/lib/hooks/useAudit';
+import { AuditInput } from '@/components/audit/AuditInput';
+import { AuditReport } from '@/components/audit/AuditReport';
 
 export default function AuditPage() {
   const { state, runAudit, reset } = useAudit('__API_URL__');
-  const hasResult = state.status === 'partial' || state.status === 'complete';
+  const hasResult = state.status !== 'idle';
 
   return (
-    <main className="flex flex-col min-h-screen" style={{ background: 'var(--wb-bg)' }}>
-      <section className="flex flex-col items-center text-center px-4 pt-20 pb-12 gap-6">
-        <div className="flex flex-col gap-3 max-w-xl">
-          <h1 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight" style={{ color: 'var(--wb-text)' }}>
-            Is your website <span style={{ color: 'var(--wb-accent)' }}>losing customers</span>?
-          </h1>
-          <p className="text-base sm:text-lg" style={{ color: 'var(--wb-muted)' }}>
-            Get a free instant audit across SEO, performance, trust, mobile and accessibility. No signup required.
-          </p>
+    <div className="flex flex-col min-h-screen" style={{ background: 'var(--wb-bg)' }}>
+
+      {/* Top bar */}
+      <header
+        className="sticky top-0 z-10 px-4 sm:px-6 py-3 flex items-center gap-4"
+        style={{
+          background: 'var(--wb-bg)',
+          borderBottom: '1px solid var(--wb-border)',
+        }}
+      >
+        <a
+          href="/"
+          className="text-sm font-bold tracking-tight shrink-0"
+          style={{ color: 'var(--wb-text)' }}
+        >
+          UX Audit
+        </a>
+
+        <div className="flex-1 max-w-2xl">
+          <AuditInput
+            onSubmit={runAudit}
+            onReset={reset}
+            status={state.status}
+            error={null}
+            currentUrl={state.url}
+          />
         </div>
 
-        <div className="w-full max-w-xl">
-          <AuditInput onSubmit={runAudit} status={state.status} error={state.error} />
+        <div className="hidden lg:flex items-center gap-5 shrink-0">
+          {[
+            { v: '51', l: 'checks' },
+            { v: '6',  l: 'categories' },
+          ].map(({ v, l }) => (
+            <div key={l} className="flex items-baseline gap-1">
+              <span className="text-sm font-bold font-mono" style={{ color: 'var(--wb-accent)' }}>{v}</span>
+              <span className="text-xs" style={{ color: 'var(--wb-muted)' }}>{l}</span>
+            </div>
+          ))}
         </div>
+      </header>
 
+      {/* Main content */}
+      <main className="flex-1 px-4 sm:px-6 py-4 max-w-5xl mx-auto w-full">
+
+        {/* Error below header */}
+        {state.error && (
+          <div
+            className="flex items-center gap-2 px-3 py-2.5 rounded text-xs mb-4"
+            style={{
+              color: 'var(--wb-critical)',
+              background: 'color-mix(in srgb, var(--wb-critical) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--wb-critical) 20%, transparent)',
+            }}
+          >
+            <span>!</span>
+            {state.error}
+          </div>
+        )}
+
+        {/* Empty / idle state */}
         {!hasResult && (
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 mt-2">
-            {[{ value: '51', label: 'checks run' }, { value: '6', label: 'categories' }, { value: '~20s', label: 'average time' }].map(({ value, label }) => (
-              <div key={label} className="flex flex-col items-center">
-                <span className="text-xl font-bold" style={{ color: 'var(--wb-accent)' }}>{value}</span>
-                <span className="text-xs" style={{ color: 'var(--wb-muted)' }}>{label}</span>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center py-24 gap-6">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <h1 className="text-2xl font-semibold" style={{ color: 'var(--wb-text)' }}>
+                Website UX Audit
+              </h1>
+              <p className="text-sm max-w-md" style={{ color: 'var(--wb-muted)' }}>
+                Enter any URL above to run a free audit across SEO, performance, trust, mobile and accessibility.
+                Results stream in real time - first results appear within seconds.
+              </p>
+            </div>
+
+            <div
+              className="grid grid-cols-2 sm:grid-cols-3 gap-px w-full max-w-lg text-xs"
+              style={{ background: 'var(--wb-border)', border: '1px solid var(--wb-border)', borderRadius: 6, overflow: 'hidden' }}
+            >
+              {[
+                { cat: 'SEO',           checks: 13, desc: 'Title, meta, headings, Open Graph' },
+                { cat: 'Trust',         checks: 7,  desc: 'HTTPS, privacy, contact, social'   },
+                { cat: 'UX Signals',    checks: 9,  desc: 'CTA, navigation, forms, chat'      },
+                { cat: 'Performance',   checks: 8,  desc: 'Core Web Vitals, page weight'       },
+                { cat: 'Mobile',        checks: 6,  desc: 'Viewport, tap targets, font size'   },
+                { cat: 'Accessibility', checks: 8,  desc: 'axe-core automated WCAG scan'       },
+              ].map(({ cat, checks, desc }) => (
+                <div
+                  key={cat}
+                  className="flex flex-col gap-0.5 px-3 py-2.5"
+                  style={{ background: 'var(--wb-surface)' }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium" style={{ color: 'var(--wb-text)' }}>{cat}</span>
+                    <span className="font-mono" style={{ color: 'var(--wb-muted)' }}>{checks}</span>
+                  </div>
+                  <span style={{ color: 'var(--wb-muted)' }}>{desc}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {hasResult && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs px-3 py-1 rounded-full font-mono" style={{ background: 'var(--wb-card)', border: '1px solid var(--wb-border)', color: 'var(--wb-muted)' }}>
-              {state.url}
-            </span>
-            <button onClick={reset} className="text-xs px-3 py-1 rounded-full font-medium transition-opacity hover:opacity-80" style={{ background: 'var(--wb-border)', color: 'var(--wb-text)' }}>
-              New audit
-            </button>
+        {/* Loading skeleton */}
+        {state.status === 'loading' && (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--wb-border)', borderTopColor: 'var(--wb-accent)' }} />
+            <p className="text-sm" style={{ color: 'var(--wb-muted)' }}>
+              Fetching and analysing <span className="font-mono" style={{ color: 'var(--wb-text)' }}>{state.url}</span>...
+            </p>
           </div>
         )}
-      </section>
 
-      <div className="flex-1 px-4">
+        {/* Results */}
         <AuditReport state={state} ctaHref="__CTA_HREF__" ctaLabel="__CTA_LABEL__" />
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

@@ -1,18 +1,21 @@
 @import "tailwindcss";
 
-/* ── Webbeet Audit UI brand tokens ──────────────────────────────────────────
-   Change these variables to re-skin the entire UI instantly.              */
+/* ── Brand tokens — edit here to reskin the entire UI ───────────────────── */
 :root {
-  --wb-accent:  #C8F135;
-  --wb-bg:      #000000;
-  --wb-card:    #0f0f0f;
-  --wb-card-2:  #161616;
-  --wb-border:  #1e1e1e;
-  --wb-text:    #f0f0f0;
-  --wb-muted:   #6b6b6b;
-  --wb-pass:    #C8F135;
-  --wb-warn:    #F5A623;
-  --wb-fail:    #E84545;
+  --wb-accent:    #C8F135;   /* lime — CTA buttons only                    */
+  --wb-bg:        #09090b;   /* page background                            */
+  --wb-surface:   #111114;   /* panel / card surface                       */
+  --wb-surface-2: #17171b;   /* nested rows, table stripes                 */
+  --wb-border:    #252529;   /* borders and dividers                       */
+  --wb-text:      #e2e2e6;   /* primary text                               */
+  --wb-muted:     #6b6b72;   /* secondary / label text                     */
+  --wb-dim:       #3a3a3f;   /* very muted (track bars, disabled)          */
+
+  /* Status colours — used for dots, badges and score bars */
+  --wb-critical:  #f04545;   /* fail                                       */
+  --wb-warning:   #e8930a;   /* warning                                    */
+  --wb-pass:      #3ecf73;   /* pass                                       */
+  --wb-info:      #5b8dee;   /* informational                              */
 }
 
 @theme inline {
@@ -22,11 +25,17 @@
   --font-mono: var(--font-geist-mono);
 }
 
-* { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body {
   background: var(--wb-bg);
   color: var(--wb-text);
   font-family: var(--font-sans, system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
+  font-size: 14px;
 }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--wb-bg); }
+::-webkit-scrollbar-thumb { background: var(--wb-border); border-radius: 3px; }
