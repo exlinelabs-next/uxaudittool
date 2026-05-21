@@ -270,37 +270,9 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Contact form */}
-              <form
-                action="https://exlinelabs.com/contact"
-                method="get"
-                className="flex items-center gap-2 mt-4"
-                style={{ maxWidth: 420, width: '100%' }}
-              >
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="your@email.com"
-                  className="flex-1 px-3 py-2 rounded outline-none"
-                  style={{
-                    fontSize: 13,
-                    background: 'var(--wb-surface)',
-                    border: '1px solid var(--wb-border)',
-                    color: 'var(--wb-text)',
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-2 rounded shrink-0 font-semibold transition-opacity hover:opacity-80"
-                  style={{ fontSize: 12, background: 'var(--wb-surface)', border: '1px solid var(--wb-border)', color: 'var(--wb-muted)' }}
-                >
-                  Get in touch
-                </button>
-              </form>
-
               {/* Trust line */}
               <p style={{ fontSize: 12, color: 'var(--wb-muted)', marginTop: '1.25rem' }}>
-                Powered by <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Exline Labs</a> &mdash; Google PageSpeed Insights + axe-core WCAG engine
+                Powered by <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Exline Labs</a> - Google PageSpeed Insights + axe-core WCAG engine
               </p>
             </section>
 
