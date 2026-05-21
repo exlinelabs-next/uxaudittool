@@ -6,3 +6,4 @@ node_modules
 *.md
 docs
 nixpacks.toml
+packages
