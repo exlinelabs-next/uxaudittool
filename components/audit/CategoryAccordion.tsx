@@ -62,8 +62,20 @@ export function CategoryAccordion({
         className="flex items-center gap-3 px-4 py-3 rounded"
         style={{ border: '1px solid var(--wb-border)', color: 'var(--wb-muted)' }}
       >
-        <span className="text-xs">{label}</span>
-        <span className="ml-auto text-xs">Unavailable</span>
+        <span className="text-sm font-medium" style={{ color: 'var(--wb-muted)' }}>{label}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <span
+            className="text-xs px-2 py-0.5 rounded"
+            style={{
+              color: 'var(--wb-warning)',
+              background: 'color-mix(in srgb, var(--wb-warning) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--wb-warning) 20%, transparent)',
+            }}
+          >
+            Timed out
+          </span>
+          <span className="text-xs" style={{ color: 'var(--wb-dim)' }}>Re-run audit to retry</span>
+        </div>
       </div>
     );
   }
@@ -129,14 +141,16 @@ export function CategoryAccordion({
 
       {/* Check table - animated with grid-template-rows trick */}
       <div
+        className="accordion-grid"
         style={{
           display: 'grid',
           gridTemplateRows: open ? '1fr' : '0fr',
           transition: 'grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        <div style={{ overflow: 'hidden' }}>
+        <div className="accordion-overflow" style={{ overflow: 'hidden' }}>
           <div
+            className="accordion-content"
             style={{
               opacity: open ? 1 : 0,
               transform: open ? 'translateY(0)' : 'translateY(-4px)',

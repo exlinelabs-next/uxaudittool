@@ -13,9 +13,10 @@ interface AuditReportProps {
   state: AuditState;
   ctaHref?: string;
   ctaLabel?: string;
+  onRerun?: () => void;
 }
 
-export function AuditReport({ state, ctaHref, ctaLabel }: AuditReportProps) {
+export function AuditReport({ state, ctaHref, ctaLabel, onRerun }: AuditReportProps) {
   const { status, partial, result } = state;
   if (status === 'idle' || status === 'loading') return null;
 
@@ -40,6 +41,7 @@ export function AuditReport({ state, ctaHref, ctaLabel }: AuditReportProps) {
         scannedAt={result?.scannedAt}
         shareUrl={result?.shareUrl}
         isPartial={status === 'partial'}
+        onRerun={onRerun}
       />
 
       {/* Phase 2 progress indicator - shown while performance/mobile/a11y are loading */}

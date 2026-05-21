@@ -381,7 +381,7 @@ export default function HomePage() {
         )}
 
         {/* Audit report */}
-        <AuditReport state={state} />
+        <AuditReport state={state} onRerun={() => runAudit(state.url)} />
       </div>
     </div>
   );
