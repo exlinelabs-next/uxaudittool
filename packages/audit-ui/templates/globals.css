@@ -1,0 +1,15 @@
+/* ── Webbeet Audit UI brand tokens ──────────────────────────────────────────
+   Edit these variables to re-skin the entire audit UI.
+   --wb-accent is the only one you MUST change to match your brand.        */
+:root {
+  --wb-accent:  __ACCENT__;   /* primary colour - buttons, highlights      */
+  --wb-bg:      #000000;      /* page background                           */
+  --wb-card:    #0f0f0f;      /* card / panel background                   */
+  --wb-card-2:  #161616;      /* nested card background                    */
+  --wb-border:  #1e1e1e;      /* border colour                             */
+  --wb-text:    #f0f0f0;      /* primary text                              */
+  --wb-muted:   #6b6b6b;      /* secondary / muted text                    */
+  --wb-pass:    #C8F135;      /* pass check colour                         */
+  --wb-warn:    #F5A623;      /* warning check colour                      */
+  --wb-fail:    #E84545;      /* fail check colour                         */
+}
