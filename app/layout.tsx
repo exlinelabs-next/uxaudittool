@@ -100,7 +100,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         >
           <span style={{ fontSize: 12, color: 'var(--wb-dim)' }}>
-            &copy; {new Date().getFullYear()} <a href="https://exlinelabs.co.uk" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'none' }}>Exline Labs</a>. Free to use.
+            Powered by{' '}
+            <a href="https://exlinelabs.co.uk" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'none', fontWeight: 600 }}>Exline Labs</a>
+            {' '}&mdash; &copy; {new Date().getFullYear()}. Free to use.
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <a href="mailto:info@exlinelabs.com" style={{ fontSize: 12, color: 'var(--wb-dim)', textDecoration: 'none' }}>
