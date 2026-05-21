@@ -15,7 +15,7 @@ setInterval(() => {
 export function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   const now = Date.now();
   const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? '3600000', 10);
-  const max = parseInt(process.env.RATE_LIMIT_MAX ?? '5', 10);
+  const max = parseInt(process.env.RATE_LIMIT_MAX ?? '25', 10);
 
   const entry = store.get(ip);
 

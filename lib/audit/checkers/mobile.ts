@@ -55,6 +55,14 @@ export function runMobileChecks(data: PageSpeedResponse, $: CheerioAPI): Categor
       status: scoreStatus(fontSize.score ?? null),
       description: 'Text should be at least 16px so it is readable without zooming.',
     },
+    {
+      id: 'touch-icon',
+      label: 'Apple touch icon',
+      value: $('link[rel="apple-touch-icon"]').length > 0 ? 'Found' : 'Not found',
+      status: $('link[rel="apple-touch-icon"]').length > 0 ? 'pass' : 'warning',
+      description:
+        'The apple-touch-icon is used when a user adds the site to their home screen on iOS.',
+    },
   ];
 
   return { score: categoryScore(checks), checks };
