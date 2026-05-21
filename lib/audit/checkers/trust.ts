@@ -93,7 +93,6 @@ export function runTrustChecks(url: string, $: CheerioAPI): CategoryResult {
   });
 
   // --- Physical address ---
-  const bodyText = $('body').text();
   const addressPattern = /\b\d{1,5}\s+\w+.{0,30}(street|st|avenue|ave|road|rd|lane|ln|drive|dr|boulevard|blvd|way|close|court|ct|place|pl)\b/i;
   const hasPostcode = /\b([A-Z]{1,2}\d{1,2}[A-Z]?\s*\d[A-Z]{2}|\d{5}(-\d{4})?)\b/i.test(bodyText);
   const hasAddress = addressPattern.test(bodyText) || hasPostcode;
@@ -109,7 +108,6 @@ export function runTrustChecks(url: string, $: CheerioAPI): CategoryResult {
 
   // --- Social media presence ---
   const socialPatterns = /facebook\.com|twitter\.com|x\.com|linkedin\.com|instagram\.com|youtube\.com|tiktok\.com/i;
-  let socialCount = 0;
   const foundSocials: string[] = [];
   $('a[href]').each((_, el) => {
     const href = $(el).attr('href') ?? '';
@@ -117,7 +115,6 @@ export function runTrustChecks(url: string, $: CheerioAPI): CategoryResult {
       const match = href.match(/(?:facebook|twitter|x\.com|linkedin|instagram|youtube|tiktok)/i);
       if (match && !foundSocials.includes(match[0].toLowerCase())) {
         foundSocials.push(match[0].toLowerCase());
-        socialCount++;
       }
     }
   });
