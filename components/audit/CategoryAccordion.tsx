@@ -54,7 +54,7 @@ export function CategoryAccordion({
   // Sort checks: fails → warnings → passes
   const sorted  = [...fails, ...warns, ...passes];
 
-  const [open, setOpen] = useState(defaultOpen ?? fails.length > 0);
+  const [open, setOpen] = useState(defaultOpen ?? false);
 
   if (result.unavailable) {
     return (
@@ -76,10 +76,11 @@ export function CategoryAccordion({
       {/* Header row */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left"
         style={{
           background: open ? 'var(--wb-surface)' : 'transparent',
-          borderBottom: open ? '1px solid var(--wb-border)' : 'none',
+          borderBottom: open ? '1px solid var(--wb-border)' : '1px solid transparent',
+          transition: 'background 0.2s, border-color 0.2s',
         }}
       >
         {/* Chevron */}
@@ -126,71 +127,88 @@ export function CategoryAccordion({
         </div>
       </button>
 
-      {/* Check table */}
-      {open && (
-        <div style={{ background: 'var(--wb-surface)' }}>
-          <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--wb-border)' }}>
-                {['Check', 'Status', 'Value', 'Notes'].map(h => (
-                  <th
-                    key={h}
-                    className="px-4 py-2 text-left font-medium"
-                    style={{ color: 'var(--wb-muted)', background: 'var(--wb-surface-2)' }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((check, i) => (
-                <tr
-                  key={check.id}
-                  style={{
-                    borderBottom: i < sorted.length - 1 ? '1px solid var(--wb-border)' : 'none',
-                    background: i % 2 === 0 ? 'transparent' : 'var(--wb-surface-2)',
-                  }}
-                >
-                  {/* Check name */}
-                  <td className="px-4 py-2.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--wb-text)', width: '28%' }}>
-                    <div className="flex items-center gap-2">
-                      <StatusDot status={check.status} />
-                      {check.label}
-                    </div>
-                  </td>
-
-                  {/* Status */}
-                  <td className="px-4 py-2.5" style={{ width: '12%' }}>
-                    <StatusBadge status={check.status} />
-                  </td>
-
-                  {/* Value */}
-                  <td className="px-4 py-2.5" style={{ width: '28%' }}>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontFamily: 'var(--font-geist-mono, monospace)',
-                        color: check.status === 'fail' ? 'var(--wb-critical)'
-                          : check.status === 'warning' ? 'var(--wb-warning)'
-                          : 'var(--wb-muted)',
-                        wordBreak: 'break-word',
-                      }}
+      {/* Check table - animated with grid-template-rows trick */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: open ? '1fr' : '0fr',
+          transition: 'grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        <div style={{ overflow: 'hidden' }}>
+          <div
+            style={{
+              opacity: open ? 1 : 0,
+              transform: open ? 'translateY(0)' : 'translateY(-4px)',
+              transition: open
+                ? 'opacity 0.2s 0.05s, transform 0.2s 0.05s'
+                : 'opacity 0.15s, transform 0.15s',
+              background: 'var(--wb-surface)',
+            }}
+          >
+            <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--wb-border)' }}>
+                  {['Check', 'Status', 'Value', 'Notes'].map(h => (
+                    <th
+                      key={h}
+                      className="px-4 py-2 text-left font-medium"
+                      style={{ color: 'var(--wb-muted)', background: 'var(--wb-surface-2)' }}
                     >
-                      {check.value}
-                    </span>
-                  </td>
-
-                  {/* Description */}
-                  <td className="px-4 py-2.5" style={{ fontSize: 12, color: 'var(--wb-muted)', width: '32%' }}>
-                    {check.description}
-                  </td>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sorted.map((check, i) => (
+                  <tr
+                    key={check.id}
+                    style={{
+                      borderBottom: i < sorted.length - 1 ? '1px solid var(--wb-border)' : 'none',
+                      background: i % 2 === 0 ? 'transparent' : 'var(--wb-surface-2)',
+                    }}
+                  >
+                    {/* Check name */}
+                    <td className="px-4 py-2.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--wb-text)', width: '28%' }}>
+                      <div className="flex items-center gap-2">
+                        <StatusDot status={check.status} />
+                        {check.label}
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-4 py-2.5" style={{ width: '12%' }}>
+                      <StatusBadge status={check.status} />
+                    </td>
+
+                    {/* Value */}
+                    <td className="px-4 py-2.5" style={{ width: '28%' }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontFamily: 'var(--font-geist-mono, monospace)',
+                          color: check.status === 'fail' ? 'var(--wb-critical)'
+                            : check.status === 'warning' ? 'var(--wb-warning)'
+                            : 'var(--wb-muted)',
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {check.value}
+                      </span>
+                    </td>
+
+                    {/* Description */}
+                    <td className="px-4 py-2.5" style={{ fontSize: 12, color: 'var(--wb-muted)', width: '32%' }}>
+                      {check.description}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
