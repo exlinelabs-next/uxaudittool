@@ -96,7 +96,7 @@ export function CategoryAccordion({
         </svg>
 
         {/* Label */}
-        <span className="text-sm font-medium flex-1 text-left" style={{ color: 'var(--wb-text)' }}>
+        <span className="flex-1 text-left" style={{ fontSize: 14, fontWeight: 600, color: 'var(--wb-text)' }}>
           {label}
         </span>
 
@@ -153,7 +153,7 @@ export function CategoryAccordion({
                   }}
                 >
                   {/* Check name */}
-                  <td className="px-4 py-2.5 font-medium" style={{ color: 'var(--wb-text)', width: '28%' }}>
+                  <td className="px-4 py-2.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--wb-text)', width: '28%' }}>
                     <div className="flex items-center gap-2">
                       <StatusDot status={check.status} />
                       {check.label}
@@ -168,8 +168,9 @@ export function CategoryAccordion({
                   {/* Value */}
                   <td className="px-4 py-2.5" style={{ width: '28%' }}>
                     <span
-                      className="font-mono"
                       style={{
+                        fontSize: 12,
+                        fontFamily: 'var(--font-geist-mono, monospace)',
                         color: check.status === 'fail' ? 'var(--wb-critical)'
                           : check.status === 'warning' ? 'var(--wb-warning)'
                           : 'var(--wb-muted)',
@@ -181,7 +182,7 @@ export function CategoryAccordion({
                   </td>
 
                   {/* Description */}
-                  <td className="px-4 py-2.5" style={{ color: 'var(--wb-muted)', width: '32%' }}>
+                  <td className="px-4 py-2.5" style={{ fontSize: 12, color: 'var(--wb-muted)', width: '32%' }}>
                     {check.description}
                   </td>
                 </tr>

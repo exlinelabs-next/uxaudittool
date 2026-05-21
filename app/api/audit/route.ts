@@ -42,6 +42,21 @@ function getClientIp(request: NextRequest): string {
   );
 }
 
+function getSiteOrigin(request: NextRequest): string {
+  // Prefer explicit env var (useful if behind a proxy), then fall back to
+  // deriving the origin from the incoming request URL so share links always
+  // work regardless of where the app is deployed.
+  const envBase = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '');
+  if (envBase) return envBase;
+
+  const forwarded = request.headers.get('x-forwarded-proto') && request.headers.get('x-forwarded-host')
+    ? `${request.headers.get('x-forwarded-proto')}://${request.headers.get('x-forwarded-host')}`
+    : null;
+  if (forwarded) return forwarded;
+
+  return new URL(request.url).origin;
+}
+
 export async function POST(request: NextRequest) {
   // --- Rate limit ---
   const ip = getClientIp(request);
@@ -166,7 +181,7 @@ export async function POST(request: NextRequest) {
         let shareUrl: string | undefined;
         try {
           shareId = await saveAuditResult({ url: urlStr, scannedAt, overallScore, categories: allCategories });
-          shareUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/audit/${shareId}`;
+          shareUrl = `${getSiteOrigin(request)}/audit/${shareId}`;
         } catch {
           // Supabase unavailable - audit still works without share link
         }
@@ -204,7 +219,7 @@ export async function POST(request: NextRequest) {
           let shareUrl: string | undefined;
           try {
             shareId = await saveAuditResult({ url: urlStr, scannedAt, overallScore, categories: allCategories });
-            shareUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/audit/${shareId}`;
+            shareUrl = `${getSiteOrigin(request)}/audit/${shareId}`;
           } catch { /* non-fatal */ }
 
           controller.enqueue(

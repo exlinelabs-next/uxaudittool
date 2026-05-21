@@ -36,8 +36,9 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
         >
           {/* Protocol prefix */}
           <span
-            className="px-3 py-2.5 text-xs font-mono shrink-0 select-none"
+            className="px-3 py-2.5 font-mono shrink-0 select-none"
             style={{
+              fontSize: 13,
               color: 'var(--wb-muted)',
               borderRight: '1px solid var(--wb-border)',
               background: 'var(--wb-surface-2)',
@@ -55,13 +56,13 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
             disabled={isRunning}
             autoComplete="url"
             spellCheck={false}
-            className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent disabled:opacity-50"
-            style={{ color: 'var(--wb-text)' }}
+            className="flex-1 px-3 py-2.5 outline-none bg-transparent disabled:opacity-50"
+            style={{ fontSize: 14, color: 'var(--wb-text)' }}
           />
 
           {/* Status text while running */}
           {isRunning && (
-            <span className="px-3 text-xs animate-pulse shrink-0" style={{ color: 'var(--wb-muted)' }}>
+            <span className="px-3 animate-pulse shrink-0" style={{ fontSize: 12, color: 'var(--wb-muted)' }}>
               {status === 'loading' ? 'Scanning...' : 'Loading performance...'}
             </span>
           )}
@@ -70,8 +71,8 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
           <button
             type="submit"
             disabled={isRunning || !value.trim()}
-            className="px-4 py-2.5 text-xs font-semibold shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: 'var(--wb-accent)', color: '#000' }}
+            className="px-4 py-2.5 shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ fontSize: 13, fontWeight: 600, background: 'var(--wb-accent)', color: '#000' }}
           >
             {isRunning ? (
               <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">

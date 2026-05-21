@@ -41,11 +41,11 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
     >
       {/* Top bar: URL + meta */}
       <div
-        className="flex flex-wrap items-center gap-3 px-4 py-2.5 text-xs"
-        style={{ borderBottom: '1px solid var(--wb-border)', background: 'var(--wb-surface-2)' }}
+        className="flex flex-wrap items-center gap-3 px-4 py-3"
+        style={{ borderBottom: '1px solid var(--wb-border)', background: 'var(--wb-surface-2)', fontSize: 13 }}
       >
         <span className="font-mono font-medium" style={{ color: 'var(--wb-text)' }}>{url}</span>
-        {dateStr && <span style={{ color: 'var(--wb-muted)' }}>Scanned {dateStr}</span>}
+        {dateStr && <span style={{ color: 'var(--wb-muted)', fontSize: 12 }}>Scanned {dateStr}</span>}
         {isPartial && (
           <span
             className="px-2 py-0.5 rounded text-xs animate-pulse"
@@ -119,8 +119,8 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
             return (
               <div key={key} className="flex items-center gap-3">
                 <span
-                  className="text-xs font-medium shrink-0"
-                  style={{ color: 'var(--wb-muted)', width: 88 }}
+                  className="font-medium shrink-0"
+                  style={{ fontSize: 13, color: 'var(--wb-muted)', width: 92 }}
                 >
                   {label}
                 </span>
