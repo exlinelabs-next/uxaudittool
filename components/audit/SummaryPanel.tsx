@@ -1,5 +1,6 @@
 import { ScoreBar, ScoreNumber, scoreLabel } from './ScoreBar';
 import { RadarChart } from './RadarChart';
+import { trackShareCopied } from '@/lib/analytics';
 import type { AuditCategories } from '@/lib/audit/types';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -56,7 +57,7 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
         )}
         {shareUrl && (
           <button
-            onClick={() => navigator.clipboard.writeText(shareUrl)}
+            onClick={() => { navigator.clipboard.writeText(shareUrl); trackShareCopied(); }}
             className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded transition-opacity hover:opacity-80"
             style={{ background: 'var(--wb-border)', color: 'var(--wb-muted)' }}
           >

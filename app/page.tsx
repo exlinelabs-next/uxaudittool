@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useAudit } from '@/lib/hooks/useAudit';
 import { AuditInput } from '@/components/audit/AuditInput';
 import { AuditReport } from '@/components/audit/AuditReport';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { trackAuditStarted, trackAuditCompleted, trackAuditErrored } from '@/lib/analytics';
 
 /* ── Corner bracket decoration ───────────────────────────────────────────── */
 function CornerBracket({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
@@ -40,9 +42,23 @@ const CATEGORIES = [
 /* ── Page ────────────────────────────────────────────────────────────────── */
 export default function HomePage() {
   const { state, runAudit, reset } = useAudit();
+  const startedAt = useRef<number>(0);
 
   // Drive every animation from this single boolean
   const active = state.status !== 'idle';
+
+  // Track audit lifecycle events
+  useEffect(() => {
+    if (state.status === 'loading') {
+      startedAt.current = Date.now();
+      trackAuditStarted(state.url);
+    } else if (state.status === 'complete' && state.result) {
+      trackAuditCompleted(state.result.overallScore, Date.now() - startedAt.current);
+    } else if (state.status === 'error') {
+      trackAuditErrored(state.error ?? 'unknown');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.status]);
 
   // Shared easing
   const ease = 'cubic-bezier(0.4, 0, 0.2, 1)';

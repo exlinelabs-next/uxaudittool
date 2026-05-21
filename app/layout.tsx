@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { CookieConsent, CookiePreferencesLink } from '@/components/CookieConsent';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
@@ -27,7 +29,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="min-h-screen flex flex-col">{children}</body>
+      <body className="min-h-screen flex flex-col">
+        {children}
+
+        {/* Minimal footer - cookie preferences */}
+        <footer
+          style={{
+            borderTop: '1px solid var(--wb-border)',
+            padding: '0.75rem 1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
+          }}
+        >
+          <span style={{ fontSize: 12, color: 'var(--wb-dim)' }}>
+            &copy; {new Date().getFullYear()} Webbeet. Free to use.
+          </span>
+          <CookiePreferencesLink />
+        </footer>
+
+        {/* GA4 - only renders after consent accepted */}
+        <GoogleAnalytics />
+
+        {/* Cookie consent banner - slides up on first visit */}
+        <CookieConsent />
+      </body>
     </html>
   );
 }
