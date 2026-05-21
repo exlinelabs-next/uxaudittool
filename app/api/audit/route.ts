@@ -34,6 +34,31 @@ function computeOverallScore(categories: AuditCategories): number {
   return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
 }
 
+// Origins allowed to call the audit API
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'https://localhost:3000',
+  'http://ux-audit.exlinelabs.co.uk',
+  'https://ux-audit.exlinelabs.co.uk',
+  'https://exlinelabs.com',
+  'https://www.exlinelabs.com',
+];
+
+function isAllowedOrigin(request: NextRequest): boolean {
+  // Allow requests with no Origin header (e.g. direct server-to-server, curl)
+  // only when running locally - in production we enforce strictly.
+  const origin = request.headers.get('origin') ?? request.headers.get('referer');
+  if (!origin) {
+    // No origin means a same-origin navigation or server context - allow it
+    return true;
+  }
+  return ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed));
+}
+
+function isLocalhostUrl(url: URL): boolean {
+  return url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '::1';
+}
+
 function getClientIp(request: NextRequest): string {
   return (
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
@@ -58,6 +83,14 @@ function getSiteOrigin(request: NextRequest): string {
 }
 
 export async function POST(request: NextRequest) {
+  // --- Origin check ---
+  if (!isAllowedOrigin(request)) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorised origin.' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   // --- Rate limit ---
   const ip = getClientIp(request);
   const rateLimit = checkRateLimit(ip);
@@ -97,31 +130,33 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // --- Reachability check ---
-  try {
-    const headRes = await fetch(url.toString(), {
-      method: 'HEAD',
-      redirect: 'follow',
-      signal: AbortSignal.timeout(8_000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WebAuditBot/1.0)' },
-    });
-    if (headRes.status === 403) {
-      return new Response(
-        JSON.stringify({ error: 'This site blocked our request. Some sites restrict automated access.' }),
-        { status: 422, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-    if (headRes.status >= 400 && headRes.status !== 405) {
+  // --- Reachability check (skipped for localhost) ---
+  if (!isLocalhostUrl(url)) {
+    try {
+      const headRes = await fetch(url.toString(), {
+        method: 'HEAD',
+        redirect: 'follow',
+        signal: AbortSignal.timeout(8_000),
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WebAuditBot/1.0)' },
+      });
+      if (headRes.status === 403) {
+        return new Response(
+          JSON.stringify({ error: 'This site blocked our request. Some sites restrict automated access.' }),
+          { status: 422, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      if (headRes.status >= 400 && headRes.status !== 405) {
+        return new Response(
+          JSON.stringify({ error: "We couldn't reach that URL. Check it's live and try again." }),
+          { status: 422, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch {
       return new Response(
         JSON.stringify({ error: "We couldn't reach that URL. Check it's live and try again." }),
         { status: 422, headers: { 'Content-Type': 'application/json' } }
       );
     }
-  } catch {
-    return new Response(
-      JSON.stringify({ error: "We couldn't reach that URL. Check it's live and try again." }),
-      { status: 422, headers: { 'Content-Type': 'application/json' } }
-    );
   }
 
   // --- Stream the audit in two phases ---

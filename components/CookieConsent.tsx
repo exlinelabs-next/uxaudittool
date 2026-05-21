@@ -56,17 +56,17 @@ export function CookieConsent() {
           boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
         }}
       >
-        {/* Cookie icon */}
-        <span style={{ fontSize: 20, flexShrink: 0 }}>🍪</span>
+        {/* Icon */}
+        <span style={{ fontSize: 20, flexShrink: 0 }}>📊</span>
 
         {/* Text */}
         <div style={{ flex: 1, minWidth: 200 }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--wb-text)', margin: 0 }}>
-            We use analytics cookies
+            Help us keep this tool free and improving
           </p>
           <p style={{ fontSize: 12, color: 'var(--wb-muted)', margin: '2px 0 0' }}>
-            Helps us understand usage, improve the tool, and make infrastructure decisions.
-            No personal data is sold. &nbsp;
+            We use anonymous analytics to see which checks matter most - so we can build what you actually need.
+            No personal data collected or sold. &nbsp;
             <a
               href="/privacy"
               target="_blank"
@@ -83,32 +83,32 @@ export function CookieConsent() {
           <button
             onClick={decline}
             style={{
-              padding: '6px 14px',
+              padding: '6px 12px',
               borderRadius: 6,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 500,
               cursor: 'pointer',
               background: 'transparent',
-              border: '1px solid var(--wb-border)',
-              color: 'var(--wb-muted)',
+              border: 'none',
+              color: 'var(--wb-dim)',
             }}
           >
-            Decline
+            No thanks
           </button>
           <button
             onClick={accept}
             style={{
-              padding: '6px 14px',
+              padding: '6px 16px',
               borderRadius: 6,
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: 'pointer',
               background: 'var(--wb-accent)',
               border: 'none',
               color: '#000',
             }}
           >
-            Accept
+            Sure, happy to help
           </button>
         </div>
       </div>

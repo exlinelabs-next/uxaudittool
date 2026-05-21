@@ -257,7 +257,7 @@ export default function HomePage() {
 
               {/* Trust line */}
               <p style={{ fontSize: 12, color: 'var(--wb-dim)', marginTop: '1.25rem' }}>
-                Powered by <a href="https://exlinelabs.co.uk" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-dim)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Exline Labs</a> &mdash; Google PageSpeed Insights + axe-core WCAG engine
+                Powered by <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-dim)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Exline Labs</a> &mdash; Google PageSpeed Insights + axe-core WCAG engine
               </p>
             </section>
 

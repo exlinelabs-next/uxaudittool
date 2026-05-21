@@ -7,7 +7,7 @@ import { CookieConsent, CookiePreferencesLink } from '@/components/CookieConsent
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ux-audit.exlinelabs.co.uk';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ux-audit.exlinelabs.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -76,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               provider: {
                 '@type': 'Organization',
                 name: 'Exline Labs',
-                url: 'https://exlinelabs.co.uk',
+                url: 'https://exlinelabs.com',
                 email: 'info@exlinelabs.com',
               },
             }),
@@ -101,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <span style={{ fontSize: 12, color: 'var(--wb-dim)' }}>
             Powered by{' '}
-            <a href="https://exlinelabs.co.uk" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'none', fontWeight: 600 }}>Exline Labs</a>
+            <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'none', fontWeight: 600 }}>Exline Labs</a>
             {' '}&mdash; &copy; {new Date().getFullYear()}. Free to use.
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -111,7 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/privacy" style={{ fontSize: 12, color: 'var(--wb-dim)', textDecoration: 'none' }}>
               Privacy Policy
             </a>
-            <a href="https://linkedin.com/company/exline-labs" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--wb-dim)', textDecoration: 'none' }}>
+            <a href="https://www.linkedin.com/company/exlinelabs/posts/?feedView=all" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--wb-dim)', textDecoration: 'none' }}>
               LinkedIn
             </a>
             <CookiePreferencesLink />
