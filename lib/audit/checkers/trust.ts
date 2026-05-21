@@ -67,5 +67,30 @@ export function runTrustChecks(url: string, $: CheerioAPI): CategoryResult {
     description: 'A copyright notice signals an actively maintained, professional site.',
   });
 
+  // --- Terms of service ---
+  let termsFound = false;
+  $('a').each((_, el) => {
+    const href = $(el).attr('href')?.toLowerCase() ?? '';
+    const text = $(el).text().toLowerCase();
+    if (
+      href.includes('terms') ||
+      text.includes('terms') ||
+      text.includes('terms of service') ||
+      text.includes('terms & conditions') ||
+      text.includes('terms and conditions')
+    ) {
+      termsFound = true;
+    }
+  });
+
+  checks.push({
+    id: 'terms',
+    label: 'Terms of service',
+    value: termsFound ? 'Found' : 'Not found',
+    status: termsFound ? 'pass' : 'warning',
+    description:
+      'Terms of service protect your business legally and show visitors you operate professionally.',
+  });
+
   return { score: categoryScore(checks), checks };
 }

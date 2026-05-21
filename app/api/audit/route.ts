@@ -12,7 +12,7 @@ import { unavailableCategory } from '@/lib/audit/scoring';
 import { saveAuditResult } from '@/lib/audit/store';
 import type { AuditResult, CategoryResult } from '@/lib/audit/types';
 
-const AUDIT_TIMEOUT_MS = 25_000;
+const AUDIT_TIMEOUT_MS = 40_000;
 
 function getClientIp(request: NextRequest): string {
   return (

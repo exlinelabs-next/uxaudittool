@@ -77,5 +77,36 @@ export function runUxChecks($: CheerioAPI): CategoryResult {
     description: 'A footer typically contains contact info, legal links, and secondary navigation.',
   });
 
+  // --- Contact form ---
+  const hasForm = $('form').length > 0;
+  const hasContactForm =
+    hasForm &&
+    ($('input[type="email"]').length > 0 ||
+      $('textarea').length > 0 ||
+      /contact|enquir|get.?in.?touch|message/i.test($('form').text()));
+
+  checks.push({
+    id: 'contact-form',
+    label: 'Contact / lead form',
+    value: hasContactForm ? 'Found' : 'Not detected',
+    status: hasContactForm ? 'pass' : 'warning',
+    description:
+      'A contact or lead form gives visitors a direct way to get in touch and convert.',
+  });
+
+  // --- Social proof ---
+  const bodyText = $('body').text();
+  const hasSocialProof =
+    /testimonial|review|rating|stars|trusted by|clients|customers|case.?stud/i.test(bodyText);
+
+  checks.push({
+    id: 'social-proof',
+    label: 'Social proof signals',
+    value: hasSocialProof ? 'Detected' : 'Not detected',
+    status: hasSocialProof ? 'pass' : 'warning',
+    description:
+      'Testimonials, reviews, or client logos build trust and increase conversion rates.',
+  });
+
   return { score: categoryScore(checks), checks };
 }

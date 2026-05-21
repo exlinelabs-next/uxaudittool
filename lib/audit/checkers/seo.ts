@@ -99,5 +99,30 @@ export function runSeoChecks($: CheerioAPI): CategoryResult {
       'Open Graph tags control how your page appears when shared on social media.',
   });
 
+  // --- Structured data (JSON-LD) ---
+  const hasJsonLd = $('script[type="application/ld+json"]').length > 0;
+
+  checks.push({
+    id: 'structured-data',
+    label: 'Structured data (JSON-LD)',
+    value: hasJsonLd ? 'Found' : 'Not found',
+    status: hasJsonLd ? 'pass' : 'warning',
+    description:
+      'Structured data helps search engines understand your content and can unlock rich results.',
+  });
+
+  // --- Robots noindex ---
+  const robotsMeta = $('meta[name="robots"]').attr('content')?.toLowerCase() ?? '';
+  const isNoIndex = robotsMeta.includes('noindex');
+
+  checks.push({
+    id: 'robots-noindex',
+    label: 'Robots noindex',
+    value: isNoIndex ? 'Page is set to noindex' : 'Indexable',
+    status: isNoIndex ? 'fail' : 'pass',
+    description:
+      'A noindex directive prevents search engines from indexing this page.',
+  });
+
   return { score: categoryScore(checks), checks };
 }

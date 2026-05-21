@@ -58,6 +58,13 @@ export function runPerformanceChecks(data: PageSpeedResponse): CategoryResult {
       status: hasBlockingResources ? 'fail' : 'pass',
       description: 'Render-blocking resources delay the initial page paint.',
     },
+    {
+      id: 'cls',
+      label: 'Cumulative Layout Shift',
+      value: audits['cumulative-layout-shift']?.displayValue ?? 'N/A',
+      status: scoreStatus(audits['cumulative-layout-shift']?.score ?? null),
+      description: 'Measures how much the page layout shifts unexpectedly. Aim for under 0.1.',
+    },
   ];
 
   return { score: categoryScore(checks), checks };
