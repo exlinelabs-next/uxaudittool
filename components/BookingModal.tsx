@@ -276,8 +276,7 @@ export function BookingModal({ onClose }: Props) {
 
             {/* ── Panel 2: Calendar grid ───────────────────────────────── */}
             <div
-              className="flex-shrink-0 bg-white cal-panel-divider"
-              style={{ minWidth: 260 }}
+              className="flex-shrink-0 bg-white cal-panel-divider cal-calendar-panel"
             >
               {/* Month nav */}
               <div className="flex items-center justify-between py-6 px-8" style={{ borderBottom: '1px solid #f3f4f6' }}>
@@ -300,19 +299,19 @@ export function BookingModal({ onClose }: Props) {
               </div>
 
               <div className="p-6">
-                {/* Day-of-week headers */}
-                <div className="flex mb-2">
+                {/* Day-of-week headers — 7-column CSS grid (no % widths) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 8 }}>
                   {DAYS.map(d => (
-                    <div key={d} style={{ width: '14.285%' }} className="py-3 text-center">
+                    <div key={d} className="py-3 text-center">
                       <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Day cells */}
-                <div className="flex flex-wrap -mx-1">
+                {/* Day cells — same 7-column grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
                   {blankDays.map((_, i) => (
-                    <div key={`b${i}`} style={{ width: '14.285%' }} className="px-1 mb-2">
+                    <div key={`b${i}`}>
                       <div style={{ aspectRatio: '1/1', borderRadius: 12, background: '#f9fafb' }} />
                     </div>
                   ))}
@@ -321,7 +320,7 @@ export function BookingModal({ onClose }: Props) {
                     const sel  = isSelected(day);
                     const tod  = isToday(day);
                     return (
-                      <div key={day} style={{ width: '14.285%' }} className="px-1 mb-2">
+                      <div key={day}>
                         <DayCell
                           day={day} past={past} selected={sel} isToday={tod}
                           onClick={() => handleDayClick(day)}
@@ -500,6 +499,15 @@ export function BookingModal({ onClose }: Props) {
           .cal-panel-divider {
             border-bottom: none;
             border-right: 1px solid rgba(0,0,0,0.1);
+          }
+        }
+        /* Calendar panel: full-width on mobile, fixed 320px on desktop */
+        .cal-calendar-panel {
+          width: 100%;
+        }
+        @media (min-width: 1024px) {
+          .cal-calendar-panel {
+            width: 320px;
           }
         }
       `}</style>
