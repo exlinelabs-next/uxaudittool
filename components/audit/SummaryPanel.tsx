@@ -73,7 +73,7 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
 
           {/* PDF export */}
           <button
-            onClick={exportPdf}
+            onClick={() => exportPdf(url, overallScore, categories, scannedAt)}
             className="flex items-center gap-1 px-2 py-1 rounded transition-opacity hover:opacity-80"
             style={{ background: 'var(--wb-border)', color: 'var(--wb-muted)', fontSize: 11, fontWeight: 600 }}
             title="Save as PDF"

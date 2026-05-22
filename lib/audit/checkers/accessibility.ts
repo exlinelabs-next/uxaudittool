@@ -80,7 +80,7 @@ export async function runAccessibilityChecks(
 
     const violations = results.violations;
     const critical = violations.filter(v => v.impact === 'critical').length;
-    const serious = violations.filter(v => v.impact === 'serious').length;
+    const serious  = violations.filter(v => v.impact === 'serious').length;
     const moderate = violations.filter(v => v.impact === 'moderate').length;
 
     // Specific violation lookups
@@ -90,27 +90,57 @@ export async function runAccessibilityChecks(
     const langViolation = violations.find(v => v.id === 'html-has-lang');
     const linkViolation = violations.find(v => v.id === 'link-name');
 
+    // Map axe rule IDs to human-friendly short names
+    const friendlyName = (id: string) =>
+      ({
+        'color-contrast': 'colour contrast',
+        'link-name': 'links missing text',
+        'image-alt': 'images missing alt',
+        'label': 'form inputs unlabelled',
+        'html-has-lang': 'missing lang attribute',
+        'aria-hidden-body': 'aria-hidden on body',
+        'button-name': 'buttons missing name',
+        'duplicate-id': 'duplicate IDs',
+        'frame-title': 'iframe missing title',
+        'aria-required-attr': 'missing required ARIA',
+        'aria-valid-attr': 'invalid ARIA attribute',
+        'scrollable-region-focusable': 'scrollable area not focusable',
+      }[id] ?? id.replace(/-/g, ' '));
+
+    const criticalViolations = violations.filter(v => v.impact === 'critical');
+    const seriousViolations  = violations.filter(v => v.impact === 'serious');
+    const moderateViolations = violations.filter(v => v.impact === 'moderate');
+
+    const listNames = (vs: typeof violations) =>
+      vs.map(v => friendlyName(v.id)).join(', ');
+
     const checks: AuditCheck[] = [
       {
         id: 'a11y-critical',
         label: 'Critical violations',
         value: critical === 0 ? 'None' : `${critical} found`,
         status: critical === 0 ? 'pass' : 'fail',
-        description: 'Critical issues make content completely inaccessible for some users.',
+        description: critical === 0
+          ? 'No critical accessibility violations detected.'
+          : `Issues: ${listNames(criticalViolations)}. Critical violations make content completely inaccessible for some users.`,
       },
       {
         id: 'a11y-serious',
         label: 'Serious violations',
         value: serious === 0 ? 'None' : `${serious} found`,
         status: serious === 0 ? 'pass' : serious <= 2 ? 'warning' : 'fail',
-        description: 'Serious issues significantly impair access for users with disabilities.',
+        description: serious === 0
+          ? 'No serious accessibility violations detected.'
+          : `Issues: ${listNames(seriousViolations)}. Serious violations significantly impair access for users with disabilities.`,
       },
       {
         id: 'a11y-moderate',
         label: 'Moderate violations',
         value: moderate === 0 ? 'None' : `${moderate} found`,
         status: moderate === 0 ? 'pass' : moderate <= 3 ? 'warning' : 'fail',
-        description: 'Moderate issues create difficulty but workarounds may exist.',
+        description: moderate === 0
+          ? 'No moderate accessibility violations detected.'
+          : `Issues: ${listNames(moderateViolations)}. Moderate violations create difficulty but workarounds may exist.`,
       },
       {
         id: 'a11y-alt',
