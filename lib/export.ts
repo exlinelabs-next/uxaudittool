@@ -426,7 +426,8 @@ function generatePdfHtml(
     border: 1px solid #e5e5e5;
     border-radius: 6px;
     overflow: hidden;
-    break-inside: avoid;
+    /* Don't avoid breaks on whole section — that creates blank-page gaps.
+       Instead keep the header glued to the first data row (below). */
   }
   .cat-header {
     display: flex;
@@ -435,6 +436,8 @@ function generatePdfHtml(
     padding: 10px 14px;
     background: #f8f8f8;
     border-bottom: 1px solid #e5e5e5;
+    break-inside: avoid;
+    break-after: avoid; /* Keep header glued to first table row */
   }
   .cat-label {
     font-size: 11pt;
@@ -461,7 +464,10 @@ function generatePdfHtml(
   }
   thead tr {
     background: #f2f2f2;
+    break-inside: avoid;
+    break-after: avoid;
   }
+  tr { break-inside: avoid; }
   th {
     padding: 6px 10px;
     text-align: left;
@@ -531,6 +537,8 @@ function generatePdfHtml(
     color: #aaa;
   }
 </style>
+<!-- Auto-trigger print when the document is fully loaded -->
+<script>window.addEventListener('load', function() { setTimeout(function() { window.print(); }, 500); });</script>
 </head>
 <body>
 
@@ -627,22 +635,20 @@ export function exportPdf(
   categories: Partial<AuditCategories>,
   scannedAt?: string,
 ): void {
-  const html      = generatePdfHtml(url, overallScore, categories, scannedAt);
-  const printWin  = window.open('', '_blank', 'width=900,height=700');
+  const html    = generatePdfHtml(url, overallScore, categories, scannedAt);
+  const blob    = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
 
-  if (!printWin) {
-    // Popup blocked — fall back to page print
-    window.print();
-    return;
-  }
+  // Open as a regular link — not blocked by popup blockers.
+  // The HTML embeds a <script> that auto-triggers window.print() on load.
+  const a = document.createElement('a');
+  a.href   = blobUrl;
+  a.target = '_blank';
+  a.rel    = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
-  printWin.document.open();
-  printWin.document.write(html);
-  printWin.document.close();
-  printWin.focus();
-
-  // Small delay for the browser to finish laying out before triggering print
-  setTimeout(() => {
-    printWin.print();
-  }, 600);
+  // Keep the blob alive long enough for the new tab to load, then release it
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
 }

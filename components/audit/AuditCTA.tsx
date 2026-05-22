@@ -23,7 +23,7 @@ export function AuditCTA({
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 px-4 py-2 rounded text-xs font-semibold shrink-0 transition-opacity hover:opacity-90"
-        style={{ background: 'var(--wb-accent)', color: '#000' }}
+        style={{ background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)' }}
       >
         {label}
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">

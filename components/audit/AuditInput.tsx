@@ -76,7 +76,7 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
             type="submit"
             disabled={isRunning || !value.trim()}
             className="px-4 py-2.5 shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ fontSize: 13, fontWeight: 600, background: 'var(--wb-accent)', color: '#000' }}
+            style={{ fontSize: 13, fontWeight: 600, background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)' }}
           >
             {isRunning ? (
               <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">

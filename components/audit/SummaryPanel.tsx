@@ -89,7 +89,7 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
             <button
               onClick={onRerun}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded transition-opacity hover:opacity-80"
-              style={{ background: 'var(--wb-accent)', color: '#000', fontSize: 11, fontWeight: 700 }}
+              style={{ background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)', fontSize: 11, fontWeight: 700 }}
               title="Re-run audit"
             >
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
