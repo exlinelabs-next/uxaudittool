@@ -9,8 +9,8 @@
   --wb-surface-2: #17171b;   /* nested rows, table stripes                 */
   --wb-border:    #252529;   /* borders and dividers                       */
   --wb-text:      #e2e2e6;   /* primary text                               */
-  --wb-muted:     #6b6b72;   /* secondary / label text                     */
-  --wb-dim:       #3a3a3f;   /* very muted (track bars, disabled)          */
+  --wb-muted:     #8c8c96;   /* secondary / label text  (≥4.5:1 on dark bg) */
+  --wb-dim:       #3a3a3f;   /* decorative only - do not use for text      */
 
   /* Status colours */
   --wb-critical:  #f04545;   /* fail                                       */
@@ -28,7 +28,7 @@
   --wb-surface-2: #f1f1f4;
   --wb-border:    #e4e4e7;
   --wb-text:      #18181b;
-  --wb-muted:     #71717a;
+  --wb-muted:     #5e5e68;   /* ≥4.5:1 on light bg */
   --wb-dim:       #d4d4d8;
 
   /* Status colours (slightly deeper for light bg) */
