@@ -13,8 +13,8 @@ interface AuditInputProps {
 
 export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: AuditInputProps) {
   const [value, setValue] = useState('');
-  const isRunning = status === 'loading' || status === 'partial';
-  const hasResult = status === 'partial' || status === 'complete';
+  const isRunning = status === 'running';
+  const hasResult = status === 'running' || status === 'complete';
 
   const isLocalhost = /^(localhost|127\.0\.0\.1)(:\d+)?/.test(value.trim());
 
@@ -67,7 +67,7 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
           {/* Status text while running */}
           {isRunning && (
             <span className="px-3 animate-pulse shrink-0" style={{ fontSize: 12, color: 'var(--wb-muted)' }}>
-              {status === 'loading' ? 'Scanning...' : 'Loading performance...'}
+              Scanning...
             </span>
           )}
 

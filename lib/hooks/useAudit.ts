@@ -1,32 +1,38 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { AuditPartialEvent, AuditCompleteEvent } from '@/lib/audit/types';
+import type { AuditCategories, CategoryKey, AuditStreamEvent } from '@/lib/audit/types';
 
-export type AuditStatus = 'idle' | 'loading' | 'partial' | 'complete' | 'error';
+export type AuditStatus = 'idle' | 'running' | 'complete' | 'error';
 
 export interface AuditState {
   status: AuditStatus;
   url: string;
-  partial: AuditPartialEvent['categories'] | null;
-  result: AuditCompleteEvent | null;
+  categories: Partial<AuditCategories>;
+  overallScore: number;
+  shareUrl?: string;
+  scannedAt?: string;
   error: string | null;
-  retryingSlowPhase?: boolean;
 }
 
 const INITIAL: AuditState = {
   status: 'idle',
   url: '',
-  partial: null,
-  result: null,
+  categories: {},
+  overallScore: 0,
   error: null,
 };
 
+/**
+ * Low-level SSE consumer. Calls `onCategory` for each category event,
+ * `onDone` when finished, and `onError` on fatal errors.
+ * Returns once the stream ends (or errors).
+ */
 async function streamAudit(
   apiUrl: string,
   body: Record<string, unknown>,
-  onPartial: (cats: AuditPartialEvent['categories']) => void,
-  onComplete: (event: AuditCompleteEvent) => void,
+  onCategory: (key: CategoryKey, result: import('@/lib/audit/types').CategoryResult) => void,
+  onDone: (event: import('@/lib/audit/types').AuditDoneEvent) => void,
   onError: (msg: string) => void,
 ): Promise<void> {
   let res: Response;
@@ -72,70 +78,84 @@ async function streamAudit(
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
         try {
-          const event = JSON.parse(line.slice(6));
-          if (event.type === 'partial') onPartial(event.categories);
-          else if (event.type === 'complete') onComplete(event);
+          const event = JSON.parse(line.slice(6)) as AuditStreamEvent;
+          if (event.type === 'category') onCategory(event.key, event.result);
+          else if (event.type === 'done') onDone(event);
           else if (event.type === 'error') onError(event.error);
         } catch {
-          // malformed event - skip
+          // malformed event — skip
         }
       }
     }
   } catch {
-    // Stream cut - caller handles residual state
+    // Stream cut — state is handled by the caller
   }
 }
 
 export function useAudit(apiUrl = '/api/audit') {
   const [state, setState] = useState<AuditState>(INITIAL);
 
+  /** Run a full audit across all 6 categories. */
   const runAudit = useCallback(
     async (url: string) => {
-      setState({ status: 'loading', url, partial: null, result: null, error: null });
+      setState({ status: 'running', url, categories: {}, overallScore: 0, error: null });
 
       await streamAudit(
         apiUrl,
         { url },
-        cats  => setState(s => ({ ...s, status: 'partial', partial: cats })),
-        event => setState(s => ({ ...s, status: 'complete', result: event, retryingSlowPhase: false })),
-        msg   => setState(s => ({
-          ...s,
-          status: s.status === 'partial' || s.status === 'complete' ? s.status : 'error',
-          error: s.status === 'partial' || s.status === 'complete' ? null : msg,
-        })),
+        (key, result) =>
+          setState(s => ({ ...s, categories: { ...s.categories, [key]: result } })),
+        event =>
+          setState(s => ({
+            ...s,
+            status: 'complete',
+            overallScore: event.overallScore,
+            shareUrl: event.shareUrl,
+            scannedAt: event.scannedAt,
+          })),
+        msg =>
+          setState(s => ({
+            ...s,
+            // If we already have some results don't hard-error, just note it
+            status: Object.keys(s.categories).length > 0 ? s.status : 'error',
+            error: msg,
+          })),
       );
     },
-    [apiUrl]
+    [apiUrl],
   );
 
-  /** Re-run only the slow phase (Performance, Mobile, Accessibility).
-   *  Fast phase results (SEO, Trust, UX) are kept intact. */
-  const retrySlowPhase = useCallback(
-    async () => {
+  /**
+   * Re-run a single category without touching the rest.
+   * The category is removed from state first so its skeleton shows while loading.
+   */
+  const retryCategory = useCallback(
+    async (key: CategoryKey) => {
       const url = state.url;
       if (!url) return;
 
-      // Keep fast results but clear slow ones and show skeletons
-      setState(s => ({
-        ...s,
-        status: 'partial',
-        result: null,
-        error: null,
-        retryingSlowPhase: true,
-      }));
+      // Clear just this category so the skeleton re-appears
+      setState(s => {
+        const cats = { ...s.categories };
+        delete cats[key];
+        return { ...s, categories: cats, error: null };
+      });
 
       await streamAudit(
         apiUrl,
-        { url, onlySlowPhase: true },
-        () => { /* no partial event from slow-only */ },
-        event => setState(s => ({ ...s, status: 'complete', result: event, retryingSlowPhase: false })),
-        msg   => setState(s => ({ ...s, error: msg, retryingSlowPhase: false })),
+        { url, onlyCategory: key },
+        (k, result) =>
+          setState(s => ({ ...s, categories: { ...s.categories, [k]: result } })),
+        // done from single-category retry carries overallScore: 0 — ignore it
+        () => {},
+        msg =>
+          setState(s => ({ ...s, error: msg })),
       );
     },
-    [apiUrl, state.url]
+    [apiUrl, state.url],
   );
 
   const reset = useCallback(() => setState(INITIAL), []);
 
-  return { state, runAudit, retrySlowPhase, reset };
+  return { state, runAudit, retryCategory, reset };
 }

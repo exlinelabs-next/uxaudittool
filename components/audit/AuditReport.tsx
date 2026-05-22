@@ -1,70 +1,94 @@
 import type { AuditState } from '@/lib/hooks/useAudit';
-import type { AuditCategories } from '@/lib/audit/types';
+import type { AuditCategories, CategoryKey } from '@/lib/audit/types';
+import { ALL_CATEGORY_KEYS } from '@/lib/audit/types';
 import { SummaryPanel } from './SummaryPanel';
 import { CategoryAccordion, CategoryAccordionSkeleton } from './CategoryAccordion';
 import { AuditCTA } from './AuditCTA';
-import { AuditProgress } from './AuditProgress';
-
-const FAST_CATS  = ['seo', 'trust', 'ux'] as const;
-const SLOW_CATS  = ['performance', 'mobile', 'accessibility'] as const;
-const ALL_CATS   = [...FAST_CATS, ...SLOW_CATS];
 
 interface AuditReportProps {
   state: AuditState;
   ctaHref?: string;
   ctaLabel?: string;
   onRerun?: () => void;
-  onRetrySlowPhase?: () => void;
+  onRetryCategory?: (key: CategoryKey) => void;
 }
 
-export function AuditReport({ state, ctaHref, ctaLabel, onRerun, onRetrySlowPhase }: AuditReportProps) {
-  const { status, partial, result } = state;
-  if (status === 'idle' || status === 'loading') return null;
+export function AuditReport({ state, ctaHref, ctaLabel, onRerun, onRetryCategory }: AuditReportProps) {
+  const { status, categories, overallScore, scannedAt, shareUrl } = state;
 
-  const allCategories: Partial<AuditCategories> = { ...partial, ...result?.categories };
-  const overallScore = result?.overallScore ?? (
-    partial
-      ? Math.round(
-          Object.values(partial).filter(c => !c.unavailable && c.checks.length > 0)
-            .reduce((s, c, _, a) => s + c.score / a.length, 0)
-        )
-      : 0
-  );
+  if (status === 'idle') return null;
+
+  const isRunning = status === 'running';
+  const loadedCount = Object.keys(categories).length;
+
+  // Compute a live overall while still running (average of what's loaded so far)
+  const displayScore = overallScore > 0
+    ? overallScore
+    : loadedCount === 0
+      ? 0
+      : Math.round(
+          Object.values(categories as Record<string, import('@/lib/audit/types').CategoryResult>)
+            .filter(c => !c.unavailable && c.checks.length > 0)
+            .reduce((s, c, _, a) => s + c.score / a.length, 0),
+        );
 
   return (
     <section className="w-full flex flex-col gap-3 pb-12">
 
       {/* Summary panel */}
       <SummaryPanel
-        overallScore={overallScore}
-        categories={allCategories}
+        overallScore={displayScore}
+        categories={categories}
         url={state.url}
-        scannedAt={result?.scannedAt}
-        shareUrl={result?.shareUrl}
-        isPartial={status === 'partial'}
+        scannedAt={scannedAt}
+        shareUrl={shareUrl}
+        isPartial={isRunning}
         onRerun={onRerun}
       />
 
-      {/* Phase 2 progress indicator - shown while performance/mobile/a11y are loading */}
-      {status === 'partial' && <AuditProgress />}
+      {/* Per-category progress strip — shown while any category is still loading */}
+      {isRunning && loadedCount < ALL_CATEGORY_KEYS.length && (
+        <div
+          className="flex items-center gap-3 px-4 py-2.5 rounded text-xs"
+          style={{ border: '1px solid var(--wb-border)', background: 'var(--wb-surface)' }}
+        >
+          {/* Spinner */}
+          <span
+            className="shrink-0 rounded-full border-2"
+            style={{
+              width: 16, height: 16,
+              borderColor: 'var(--wb-border)',
+              borderTopColor: 'var(--wb-warning)',
+              animation: 'spin 0.9s linear infinite',
+              display: 'inline-block',
+            }}
+          />
+          <span style={{ color: 'var(--wb-muted)' }}>
+            Analysing&hellip;&ensp;
+            <span style={{ color: 'var(--wb-text)', fontWeight: 600 }}>
+              {loadedCount} of {ALL_CATEGORY_KEYS.length}
+            </span>
+            &nbsp;categories done
+          </span>
+        </div>
+      )}
 
-      {/* Accordion sections */}
+      {/* Accordion sections — one per category, skeleton while not yet loaded */}
       <div className="flex flex-col gap-2 mt-1">
-        {ALL_CATS.map(cat => {
-          const data = (allCategories as Record<string, import('@/lib/audit/types').CategoryResult | undefined>)[cat];
-          const isSlowCat = (SLOW_CATS as readonly string[]).includes(cat);
+        {ALL_CATEGORY_KEYS.map(key => {
+          const data = (categories as Partial<Record<CategoryKey, import('@/lib/audit/types').CategoryResult>>)[key];
           return data
             ? <CategoryAccordion
-                key={cat}
-                category={cat}
+                key={key}
+                category={key}
                 result={data}
-                onRetry={isSlowCat && onRetrySlowPhase ? onRetrySlowPhase : undefined}
+                onRetry={onRetryCategory ? () => onRetryCategory(key) : undefined}
               />
-            : <CategoryAccordionSkeleton key={cat} category={cat} />;
+            : <CategoryAccordionSkeleton key={key} category={key} />;
         })}
       </div>
 
-      {/* CTA - only once complete */}
+      {/* CTA — only once fully complete */}
       {status === 'complete' && (
         <AuditCTA href={ctaHref} label={ctaLabel} />
       )}
