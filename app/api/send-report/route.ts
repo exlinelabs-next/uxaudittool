@@ -1,22 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
 import { generateMarkdown, generatePdfHtml } from '@/lib/export';
 import type { AuditCategories } from '@/lib/audit/types';
 
-// Lazy transport — created per-request so missing env vars only fail at call time
-function getTransport() {
-  return nodemailer.createTransport({
-    host:   process.env.MAIL_HOST   ?? 'smtp-relay.brevo.com',
-    port:   Number(process.env.MAIL_PORT ?? 587),
-    secure: false, // STARTTLS on 587
-    auth: {
-      user: process.env.MAIL_USERNAME,
-      pass: process.env.MAIL_PASSWORD,
-    },
-  });
-}
+const BREVO_API  = 'https://api.brevo.com/v3/smtp/email';
+const FROM_NAME  = process.env.MAIL_FROM_NAME    ?? 'Exline Labs';
+const FROM_EMAIL = process.env.MAIL_FROM_ADDRESS ?? 'hello@exlinelabs.com';
 
-const FROM_ADDRESS = `${process.env.MAIL_FROM_NAME ?? 'Exline Labs'} <${process.env.MAIL_FROM_ADDRESS ?? 'hello@exlinelabs.com'}>`;
+async function sendViaBrevo(opts: {
+  to: string;
+  subject: string;
+  html: string;
+  attachmentName: string;
+  attachmentContent: string; // base64
+  attachmentType: string;
+}) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) throw new Error('BREVO_API_KEY is not set');
+
+  const res = await fetch(BREVO_API, {
+    method: 'POST',
+    headers: { 'api-key': apiKey, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      sender:      { name: FROM_NAME, email: FROM_EMAIL },
+      to:          [{ email: opts.to }],
+      subject:     opts.subject,
+      htmlContent: opts.html,
+      attachment:  [{ name: opts.attachmentName, content: opts.attachmentContent }],
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Brevo ${res.status}: ${body}`);
+  }
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   seo: 'SEO', trust: 'Trust & Credibility', ux: 'UX Signals',
@@ -63,7 +80,7 @@ function buildEmailHtml(
 
   const attachmentNote = format === 'pdf'
     ? 'The attached <strong>.html file</strong> is your full audit report. Open it in Chrome or Safari and press <strong>Cmd+P</strong> (Mac) or <strong>Ctrl+P</strong> (Windows), then choose &ldquo;Save as PDF&rdquo; to get a print-ready PDF.'
-    : 'The attached <strong>.md file</strong> is your full audit report in Markdown format. Open it in any Markdown viewer, Notion, or your preferred editor.';
+    : 'The attached <strong>.txt file</strong> is your full audit report in Markdown format. Open it in any Markdown viewer, Notion, or rename it to <strong>.md</strong> for full syntax highlighting.';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -150,7 +167,7 @@ function buildEmailHtml(
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.MAIL_USERNAME || !process.env.MAIL_PASSWORD) {
+  if (!process.env.BREVO_API_KEY) {
     return NextResponse.json({ error: 'Email delivery not configured' }, { status: 503 });
   }
 
@@ -199,8 +216,8 @@ export async function POST(req: NextRequest) {
   try {
     if (format === 'md') {
       attachmentContent  = generateMarkdown(url, overallScore, cats, scannedAtStr);
-      attachmentFilename = `ux-audit-${new URL(url).hostname.replace(/[^a-z0-9-]/gi, '-')}.md`;
-      attachmentType     = 'text/markdown';
+      attachmentFilename = `ux-audit-${new URL(url).hostname.replace(/[^a-z0-9-]/gi, '-')}.txt`;
+      attachmentType     = 'text/plain';
     } else {
       attachmentContent  = generatePdfHtml(url, overallScore, cats, scannedAtStr);
       attachmentFilename = `ux-audit-${new URL(url).hostname.replace(/[^a-z0-9-]/gi, '-')}.html`;
@@ -214,23 +231,17 @@ export async function POST(req: NextRequest) {
   const emailHtml = buildEmailHtml(url, overallScore, cats, format);
 
   try {
-    const transport = getTransport();
-    await transport.sendMail({
-      from: FROM_ADDRESS,
-      to:   email,
+    await sendViaBrevo({
+      to:                email,
       subject,
-      html: emailHtml,
-      attachments: [
-        {
-          filename:    attachmentFilename,
-          content:     Buffer.from(attachmentContent, 'utf-8'),
-          contentType: attachmentType,
-        },
-      ],
+      html:              emailHtml,
+      attachmentName:    attachmentFilename,
+      attachmentContent: Buffer.from(attachmentContent, 'utf-8').toString('base64'),
+      attachmentType,
     });
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error('[send-report] SMTP error:', err);
+    console.error('[send-report] Brevo error:', err);
     return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
   }
 }
