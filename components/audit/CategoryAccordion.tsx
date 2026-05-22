@@ -188,7 +188,7 @@ export function CategoryAccordion({
                   {['Check', 'Impact', 'Status', 'Value', 'Notes'].map(h => (
                     <th
                       key={h}
-                      className="px-4 py-2 text-left font-medium"
+                      className={`px-4 py-2 text-left font-medium${h === 'Impact' ? ' hidden sm:table-cell' : ''}`}
                       style={{ color: 'var(--wb-muted)', background: 'var(--wb-surface-2)' }}
                     >
                       {h}
@@ -214,7 +214,7 @@ export function CategoryAccordion({
                     </td>
 
                     {/* Impact */}
-                    <td className="px-4 py-2.5" style={{ width: '9%' }}>
+                    <td className="px-4 py-2.5 hidden sm:table-cell" style={{ width: '9%' }}>
                       <span
                         className="font-mono text-xs font-semibold"
                         style={{

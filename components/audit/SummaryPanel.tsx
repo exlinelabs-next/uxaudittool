@@ -112,8 +112,8 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
 
         {/* Overall score */}
         <div
-          className="flex flex-col items-center justify-center gap-3 px-8 py-6"
-          style={{ borderRight: '1px solid var(--wb-border)', minWidth: 160 }}
+          className="flex flex-col items-center justify-center gap-3 px-8 py-6 border-b md:border-b-0 md:border-r"
+          style={{ borderColor: 'var(--wb-border)', minWidth: 160 }}
         >
           <ScoreNumber score={overallScore} size="lg" />
           <div className="flex flex-col items-center gap-1 w-full">
@@ -143,8 +143,8 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
 
         {/* Radar chart */}
         <div
-          className="flex items-center justify-center p-4"
-          style={{ borderRight: '1px solid var(--wb-border)' }}
+          className="flex items-center justify-center p-4 border-b md:border-b-0 md:border-r"
+          style={{ borderColor: 'var(--wb-border)' }}
         >
           <RadarChart scores={scores} />
         </div>
