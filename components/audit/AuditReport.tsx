@@ -4,6 +4,7 @@ import { ALL_CATEGORY_KEYS } from '@/lib/audit/types';
 import { SummaryPanel } from './SummaryPanel';
 import { CategoryAccordion, CategoryAccordionSkeleton } from './CategoryAccordion';
 import { AuditCTA } from './AuditCTA';
+import { ScreenshotGuard } from '@/components/ScreenshotGuard';
 
 interface AuditReportProps {
   state: AuditState;
@@ -33,6 +34,7 @@ export function AuditReport({ state, ctaHref, ctaLabel, onRerun, onRetryCategory
         );
 
   return (
+    <ScreenshotGuard>
     <section className="w-full flex flex-col gap-3 pb-12">
 
       {/* Summary panel */}
@@ -93,5 +95,6 @@ export function AuditReport({ state, ctaHref, ctaLabel, onRerun, onRetryCategory
         <AuditCTA href={ctaHref} label={ctaLabel} />
       )}
     </section>
+    </ScreenshotGuard>
   );
 }

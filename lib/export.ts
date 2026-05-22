@@ -299,7 +299,7 @@ function renderCategoryTable(key: string, cat: CategoryResult): string {
   </section>`;
 }
 
-function generatePdfHtml(
+export function generatePdfHtml(
   url: string,
   overallScore: number,
   categories: Partial<AuditCategories>,
