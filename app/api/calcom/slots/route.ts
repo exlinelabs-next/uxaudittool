@@ -59,7 +59,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const url = `${BASE_URL}/slots/available?eventTypeId=${eventTypeId}&startTime=${date}T00:00:00Z&endTime=${date}T23:59:59Z`;
+    const timeZone = req.nextUrl.searchParams.get('timeZone') ?? 'UTC';
+    const url = `${BASE_URL}/slots/available?eventTypeId=${eventTypeId}&startTime=${date}T00:00:00Z&endTime=${date}T23:59:59Z&timeZone=${encodeURIComponent(timeZone)}`;
 
     const res = await fetch(url, {
       headers: {
