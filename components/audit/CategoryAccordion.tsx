@@ -84,7 +84,7 @@ export function CategoryAccordion({
               className="flex items-center gap-1 text-xs px-2.5 py-1 rounded transition-opacity hover:opacity-80"
               style={{
                 background: 'var(--wb-accent)',
-                color: '#000',
+                color: 'var(--wb-accent-fg)',
                 fontWeight: 700,
               }}
             >

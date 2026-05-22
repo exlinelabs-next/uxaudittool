@@ -41,7 +41,7 @@ const CATEGORIES = [
 
 /* ── Page ────────────────────────────────────────────────────────────────── */
 export default function HomePage() {
-  const { state, runAudit, retrySlowPhase, reset } = useAudit();
+  const { state, runAudit, retryCategory, reset } = useAudit();
   const startedAt = useRef<number>(0);
 
   // Drive every animation from this single boolean
@@ -49,11 +49,11 @@ export default function HomePage() {
 
   // Track audit lifecycle events
   useEffect(() => {
-    if (state.status === 'loading') {
+    if (state.status === 'running') {
       startedAt.current = Date.now();
       trackAuditStarted(state.url);
-    } else if (state.status === 'complete' && state.result) {
-      trackAuditCompleted(state.result.overallScore, Date.now() - startedAt.current);
+    } else if (state.status === 'complete') {
+      trackAuditCompleted(state.overallScore, Date.now() - startedAt.current);
     } else if (state.status === 'error') {
       trackAuditErrored(state.error ?? 'unknown');
     }
@@ -373,8 +373,8 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Loading spinner - shown while fetching before first results */}
-        {state.status === 'loading' && (
+        {/* Loading spinner - shown while fetching before first results arrive */}
+        {state.status === 'running' && Object.keys(state.categories).length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div
               className="rounded-full border-2"
@@ -396,7 +396,7 @@ export default function HomePage() {
         )}
 
         {/* Audit report */}
-        <AuditReport state={state} onRerun={() => runAudit(state.url)} onRetrySlowPhase={retrySlowPhase} />
+        <AuditReport state={state} onRerun={() => runAudit(state.url)} onRetryCategory={retryCategory} />
       </div>
     </div>
   );

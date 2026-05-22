@@ -13,8 +13,8 @@ interface AuditInputProps {
 
 export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: AuditInputProps) {
   const [value, setValue] = useState('');
-  const isRunning = status === 'loading' || status === 'partial';
-  const hasResult = status === 'partial' || status === 'complete';
+  const isRunning = status === 'running';
+  const hasResult = status === 'running' || status === 'complete';
 
   const isLocalhost = /^(localhost|127\.0\.0\.1)(:\d+)?/.test(value.trim());
 
@@ -67,7 +67,7 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
           {/* Status text while running */}
           {isRunning && (
             <span className="px-3 animate-pulse shrink-0" style={{ fontSize: 12, color: 'var(--wb-muted)' }}>
-              {status === 'loading' ? 'Scanning...' : 'Loading performance...'}
+              Scanning...
             </span>
           )}
 
@@ -76,7 +76,7 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
             type="submit"
             disabled={isRunning || !value.trim()}
             className="px-4 py-2.5 shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ fontSize: 13, fontWeight: 600, background: 'var(--wb-accent)', color: '#000' }}
+            style={{ fontSize: 13, fontWeight: 600, background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)' }}
           >
             {isRunning ? (
               <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">

@@ -33,7 +33,7 @@ export default async function AuditReportPage({ params }: Props) {
         <a
           href="/"
           className="mt-2 px-5 py-2.5 rounded font-semibold text-sm transition-opacity hover:opacity-90"
-          style={{ background: 'var(--wb-accent)', color: '#000' }}
+          style={{ background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)' }}
         >
           Run a new audit
         </a>

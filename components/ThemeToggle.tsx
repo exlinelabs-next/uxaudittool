@@ -29,7 +29,7 @@ export function ThemeToggle() {
 
   // Render a placeholder of the same size during SSR to avoid layout shift
   if (!mounted) {
-    return <div style={{ width: 28, height: 28 }} />;
+    return <div style={{ width: 40, height: 40 }} />;
   }
 
   return (
@@ -38,8 +38,8 @@ export function ThemeToggle() {
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
       className="flex items-center justify-center rounded transition-opacity hover:opacity-70 shrink-0"
       style={{
-        width: 28,
-        height: 28,
+        width: 40,
+        height: 40,
         color: 'var(--wb-muted)',
         border: '1px solid var(--wb-border)',
         background: 'var(--wb-surface)',

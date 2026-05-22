@@ -3,13 +3,14 @@
 /* ── Brand tokens - dark mode (default) ─────────────────────────────────── */
 :root, [data-theme="dark"] {
   --wb-accent:    #C8F135;   /* lime - CTA buttons only                    */
+  --wb-accent-fg: #000;      /* text colour on accent-coloured buttons     */
   --wb-bg:        #09090b;   /* page background                            */
   --wb-surface:   #111114;   /* panel / card surface                       */
   --wb-surface-2: #17171b;   /* nested rows, table stripes                 */
   --wb-border:    #252529;   /* borders and dividers                       */
   --wb-text:      #e2e2e6;   /* primary text                               */
-  --wb-muted:     #6b6b72;   /* secondary / label text                     */
-  --wb-dim:       #3a3a3f;   /* very muted (track bars, disabled)          */
+  --wb-muted:     #8c8c96;   /* secondary / label text  (≥4.5:1 on dark bg) */
+  --wb-dim:       #3a3a3f;   /* decorative only - do not use for text      */
 
   /* Status colours */
   --wb-critical:  #f04545;   /* fail                                       */
@@ -21,12 +22,13 @@
 /* ── Brand tokens - light mode ───────────────────────────────────────────── */
 [data-theme="light"] {
   --wb-accent:    #5a9e00;   /* darker lime - legible on white             */
+  --wb-accent-fg: #fff;      /* white text on dark green accent            */
   --wb-bg:        #f4f4f5;
   --wb-surface:   #ffffff;
   --wb-surface-2: #f1f1f4;
   --wb-border:    #e4e4e7;
   --wb-text:      #18181b;
-  --wb-muted:     #71717a;
+  --wb-muted:     #5e5e68;   /* ≥4.5:1 on light bg */
   --wb-dim:       #d4d4d8;
 
   /* Status colours (slightly deeper for light bg) */
@@ -61,39 +63,29 @@ html, body {
 /* Shared keyframes */
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Print / PDF styles ──────────────────────────────────────────────────── */
+/* ── Print / Screenshot prevention ──────────────────────────────────────── */
+/*
+ * Printing the live page is disabled — the PDF export uses a separate blob
+ * document so it is unaffected. This prevents Ctrl+P / print-to-PDF grabs
+ * of the interactive report.
+ */
 @media print {
-  /* Hide interactive chrome */
-  header, footer, .no-print,
-  [data-cookie-banner], [data-cookie-link] {
+  /* Hide everything */
+  body > * {
     display: none !important;
   }
 
-  /* White background for print */
-  html, body {
-    background: #fff !important;
-    color: #000 !important;
-  }
-
-  /* Force all accordions open */
-  .accordion-grid {
-    grid-template-rows: 1fr !important;
-  }
-  .accordion-overflow {
-    overflow: visible !important;
-  }
-  .accordion-content {
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  /* Avoid breaking inside accordions */
-  .accordion-grid, table, tr {
-    break-inside: avoid;
-  }
-
-  /* Keep links readable */
-  a[href]::after {
-    content: none;
+  /* Show a single confidential placeholder instead */
+  body::after {
+    display: block !important;
+    content: "This report is confidential. Use the Email button on the audit page to receive a copy.";
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    font-size: 14pt;
+    color: #333;
+    text-align: center;
+    padding: 80px 40px;
+    position: fixed;
+    inset: 0;
+    background: #fff;
   }
 }

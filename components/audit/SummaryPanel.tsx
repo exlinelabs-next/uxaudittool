@@ -1,6 +1,9 @@
+'use client';
+
+import { useState } from 'react';
 import { ScoreBar, ScoreNumber, scoreLabel } from './ScoreBar';
 import { RadarChart } from './RadarChart';
-import { downloadMarkdown, exportPdf } from '@/lib/export';
+import { EmailReportModal } from '@/components/EmailReportModal';
 import type { AuditCategories } from '@/lib/audit/types';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -19,6 +22,7 @@ interface SummaryPanelProps {
 }
 
 export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUrl: _shareUrl, isPartial, onRerun }: SummaryPanelProps) {
+  const [emailModal, setEmailModal] = useState<'md' | 'pdf' | null>(null);
   const scores: Partial<Record<string, number>> = {};
   let totalChecks = 0, totalFail = 0, totalWarn = 0, totalPass = 0;
 
@@ -37,6 +41,7 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
     : null;
 
   return (
+    <>
     <div
       className="rounded overflow-hidden"
       style={{ border: '1px solid var(--wb-border)', background: 'var(--wb-surface)' }}
@@ -60,26 +65,26 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
         <div className="ml-auto flex items-center gap-1.5 no-print">
           {/* Markdown export */}
           <button
-            onClick={() => downloadMarkdown(url, overallScore, categories, scannedAt)}
+            onClick={() => setEmailModal('md')}
             className="flex items-center gap-1 px-2 py-1 rounded transition-opacity hover:opacity-80"
             style={{ background: 'var(--wb-border)', color: 'var(--wb-muted)', fontSize: 11, fontWeight: 600 }}
-            title="Download as Markdown"
+            title="Email as Markdown"
           >
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-              <path d="M6 1v7M3 5l3 3 3-3M2 10h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1 3l5 3.5L11 3M1 3h10v7H1V3z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             .md
           </button>
 
           {/* PDF export */}
           <button
-            onClick={exportPdf}
+            onClick={() => setEmailModal('pdf')}
             className="flex items-center gap-1 px-2 py-1 rounded transition-opacity hover:opacity-80"
             style={{ background: 'var(--wb-border)', color: 'var(--wb-muted)', fontSize: 11, fontWeight: 600 }}
-            title="Save as PDF"
+            title="Email as PDF"
           >
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-              <path d="M6 1v7M3 5l3 3 3-3M2 10h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1 3l5 3.5L11 3M1 3h10v7H1V3z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             PDF
           </button>
@@ -89,7 +94,7 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
             <button
               onClick={onRerun}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded transition-opacity hover:opacity-80"
-              style={{ background: 'var(--wb-accent)', color: '#000', fontSize: 11, fontWeight: 700 }}
+              style={{ background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)', fontSize: 11, fontWeight: 700 }}
               title="Re-run audit"
             >
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
@@ -168,5 +173,18 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
         </div>
       </div>
     </div>
+
+    {/* Email report modal */}
+    {emailModal && (
+      <EmailReportModal
+        format={emailModal}
+        url={url}
+        overallScore={overallScore}
+        categories={categories}
+        scannedAt={scannedAt}
+        onClose={() => setEmailModal(null)}
+      />
+    )}
+    </>
   );
 }
