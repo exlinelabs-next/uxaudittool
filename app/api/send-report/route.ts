@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { generateMarkdown, generatePdfHtml } from '@/lib/export';
 import type { AuditCategories } from '@/lib/audit/types';
 
-// Lazy — only instantiate when a request arrives so build doesn't fail without the key
-function getResend() {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error('RESEND_API_KEY is not set');
-  return new Resend(key);
+// Lazy transport — created per-request so missing env vars only fail at call time
+function getTransport() {
+  return nodemailer.createTransport({
+    host:   process.env.MAIL_HOST   ?? 'smtp-relay.brevo.com',
+    port:   Number(process.env.MAIL_PORT ?? 587),
+    secure: false, // STARTTLS on 587
+    auth: {
+      user: process.env.MAIL_USERNAME,
+      pass: process.env.MAIL_PASSWORD,
+    },
+  });
 }
 
-const FROM_ADDRESS = process.env.RESEND_FROM ?? 'Exline Labs Audit <audit@exlinelabs.com>';
+const FROM_ADDRESS = `${process.env.MAIL_FROM_NAME ?? 'Exline Labs'} <${process.env.MAIL_FROM_ADDRESS ?? 'hello@exlinelabs.com'}>`;
 
 const CATEGORY_LABELS: Record<string, string> = {
   seo: 'SEO', trust: 'Trust & Credibility', ux: 'UX Signals',
@@ -144,7 +150,7 @@ function buildEmailHtml(
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.RESEND_API_KEY) {
+  if (!process.env.MAIL_USERNAME || !process.env.MAIL_PASSWORD) {
     return NextResponse.json({ error: 'Email delivery not configured' }, { status: 503 });
   }
 
@@ -208,23 +214,23 @@ export async function POST(req: NextRequest) {
   const emailHtml = buildEmailHtml(url, overallScore, cats, format);
 
   try {
-    const resend = getResend();
-    await resend.emails.send({
+    const transport = getTransport();
+    await transport.sendMail({
       from: FROM_ADDRESS,
-      to: [email],
+      to:   email,
       subject,
       html: emailHtml,
       attachments: [
         {
-          filename: attachmentFilename,
-          content: Buffer.from(attachmentContent, 'utf-8').toString('base64'),
+          filename:    attachmentFilename,
+          content:     Buffer.from(attachmentContent, 'utf-8'),
           contentType: attachmentType,
         },
       ],
     });
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error('[send-report] Resend error:', err);
+    console.error('[send-report] SMTP error:', err);
     return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
   }
 }
