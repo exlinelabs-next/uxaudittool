@@ -102,7 +102,7 @@ export function CookieConsent() {
               cursor: 'pointer',
               background: 'var(--wb-accent)',
               border: 'none',
-              color: '#000',
+              color: 'var(--wb-accent-fg)',
             }}
           >
             Sure, happy to help

@@ -12,13 +12,14 @@ import { unavailableCategory } from '@/lib/audit/scoring';
 import { saveAuditResult } from '@/lib/audit/store';
 import type {
   AuditCategories,
+  CategoryKey,
   AuditStreamEvent,
 } from '@/lib/audit/types';
 
-// Per-operation timeouts. PageSpeed is the slowest - large/complex sites can take 60s+.
-const HTML_TIMEOUT_MS  = 12_000;
-const PAGESPEED_TIMEOUT_MS = 120_000;
-const A11Y_TIMEOUT_MS  =  60_000;
+// Per-operation timeouts.
+const HTML_TIMEOUT_MS       = 12_000;
+const PAGESPEED_TIMEOUT_MS  = 120_000;
+const A11Y_TIMEOUT_MS       =  60_000;
 
 const encoder = new TextEncoder();
 
@@ -26,12 +27,31 @@ function sseEvent(data: AuditStreamEvent): Uint8Array {
   return encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-function computeOverallScore(categories: AuditCategories): number {
+function computeOverallScore(categories: Partial<AuditCategories>): number {
   const scores = Object.values(categories)
-    .filter(c => !c.unavailable && c.checks.length > 0)
+    .filter((c): c is import('@/lib/audit/types').CategoryResult => !!c && !c.unavailable && c.checks.length > 0)
     .map(c => c.score);
   if (scores.length === 0) return 0;
   return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+}
+
+function getClientIp(request: NextRequest): string {
+  return (
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    request.headers.get('x-real-ip') ??
+    'unknown'
+  );
+}
+
+function getSiteOrigin(request: NextRequest): string {
+  const envBase = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '');
+  if (envBase) return envBase;
+  const forwarded =
+    request.headers.get('x-forwarded-proto') && request.headers.get('x-forwarded-host')
+      ? `${request.headers.get('x-forwarded-proto')}://${request.headers.get('x-forwarded-host')}`
+      : null;
+  if (forwarded) return forwarded;
+  return new URL(request.url).origin;
 }
 
 // Origins allowed to call the audit API
@@ -45,41 +65,13 @@ const ALLOWED_ORIGINS = [
 ];
 
 function isAllowedOrigin(request: NextRequest): boolean {
-  // Allow requests with no Origin header (e.g. direct server-to-server, curl)
-  // only when running locally - in production we enforce strictly.
   const origin = request.headers.get('origin') ?? request.headers.get('referer');
-  if (!origin) {
-    // No origin means a same-origin navigation or server context - allow it
-    return true;
-  }
+  if (!origin) return true;
   return ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed));
 }
 
 function isLocalhostUrl(url: URL): boolean {
   return url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '::1';
-}
-
-function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
-    request.headers.get('x-real-ip') ??
-    'unknown'
-  );
-}
-
-function getSiteOrigin(request: NextRequest): string {
-  // Prefer explicit env var (useful if behind a proxy), then fall back to
-  // deriving the origin from the incoming request URL so share links always
-  // work regardless of where the app is deployed.
-  const envBase = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '');
-  if (envBase) return envBase;
-
-  const forwarded = request.headers.get('x-forwarded-proto') && request.headers.get('x-forwarded-host')
-    ? `${request.headers.get('x-forwarded-proto')}://${request.headers.get('x-forwarded-host')}`
-    : null;
-  if (forwarded) return forwarded;
-
-  return new URL(request.url).origin;
 }
 
 export async function POST(request: NextRequest) {
@@ -101,8 +93,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // --- Parse + validate URL ---
-  let body: { url?: string; onlySlowPhase?: boolean };
+  // --- Parse + validate body ---
+  let body: { url?: string; onlyCategory?: CategoryKey };
   try {
     body = await request.json();
   } catch {
@@ -112,8 +104,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const onlySlowPhase = body.onlySlowPhase === true;
+  const onlyCategory = body.onlyCategory ?? null;
   const rawUrl = body.url?.trim() ?? '';
+
   if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
     return new Response(
       JSON.stringify({ error: 'Please enter a valid website URL including https://' }),
@@ -160,165 +153,120 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // --- Stream the audit in two phases ---
   const scannedAt = new Date().toISOString();
   const urlStr = url.toString();
 
   const stream = new ReadableStream({
     async start(controller) {
-      try {
-        if (onlySlowPhase) {
-          // ── Slow-phase-only retry ──────────────────────────────────────────
-          // Re-fetch HTML alongside PageSpeed so mobile checks can run properly.
-          const [pageSpeedResult, a11yResult, htmlRetryResult] = await Promise.allSettled([
-            fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)),
-            runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS)),
-            fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS)),
-          ]);
+      const emit = (event: AuditStreamEvent) => {
+        try { controller.enqueue(sseEvent(event)); } catch { /* stream closed */ }
+      };
 
-          const pageSpeedData =
-            pageSpeedResult.status === 'fulfilled' ? pageSpeedResult.value : null;
-          const htmlData =
-            htmlRetryResult.status === 'fulfilled' ? htmlRetryResult.value : null;
-
-          const slowCategories = {
-            performance: pageSpeedData ? runPerformanceChecks(pageSpeedData) : unavailableCategory(),
-            mobile: pageSpeedData && htmlData
-              ? runMobileChecks(pageSpeedData, htmlData.$)
-              : unavailableCategory(),
-            accessibility: a11yResult.status === 'fulfilled' ? a11yResult.value : unavailableCategory(),
-          };
-
-          const overallScore = computeOverallScore({
-            seo: unavailableCategory(), trust: unavailableCategory(), ux: unavailableCategory(),
-            ...slowCategories,
-          });
-
-          let shareId: string | undefined;
-          let shareUrl: string | undefined;
-          try {
-            shareId = await saveAuditResult({ url: urlStr, scannedAt, overallScore, categories: { seo: unavailableCategory(), trust: unavailableCategory(), ux: unavailableCategory(), ...slowCategories } });
-            shareUrl = `${getSiteOrigin(request)}/audit/${shareId}`;
-          } catch { /* non-fatal */ }
-
-          controller.enqueue(sseEvent({ type: 'complete', categories: slowCategories, overallScore, shareId, shareUrl, scannedAt }));
-          controller.close();
-          return;
-        }
-
-        // ── Start all three slow fetches simultaneously ────────────────────
-        // HTML is fast (~1-3s). PageSpeed and accessibility are slow (20-90s).
-        // We kick off all three at once so PageSpeed doesn't wait for HTML.
-        const htmlPromise = fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS));
-        const pageSpeedPromise = fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS));
-        const a11yPromise = runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS));
-
-        // ── Phase 1: fast HTML-based checks (SEO, trust, UX) ──────────────
-        // Await only HTML - PageSpeed is already running in the background.
-        // Send partial results to the client as soon as HTML finishes (~1-3s).
-        const htmlResult = await htmlPromise;
-
-        const fastCategories = {
-          seo: runSeoChecks(htmlResult.$),
-          trust: runTrustChecks(urlStr, htmlResult.$),
-          ux: runUxChecks(htmlResult.$),
-        };
-
-        controller.enqueue(sseEvent({ type: 'partial', categories: fastCategories }));
-
-        // ── Phase 2: slow checks (PageSpeed + accessibility) ──────────────
-        // Both are already in flight - just wait for whichever finishes last.
-        // Each has its own timeout so a slow site doesn't block the other.
-        const [pageSpeedResult, a11yResult] = await Promise.allSettled([
-          pageSpeedPromise,
-          a11yPromise,
-        ]);
-
-        const pageSpeedData =
-          pageSpeedResult.status === 'fulfilled' ? pageSpeedResult.value : null;
-
-        const slowCategories = {
-          performance: pageSpeedData
-            ? runPerformanceChecks(pageSpeedData)
-            : unavailableCategory(),
-          mobile: pageSpeedData
-            ? runMobileChecks(pageSpeedData, htmlResult.$)
-            : unavailableCategory(),
-          accessibility:
-            a11yResult.status === 'fulfilled' ? a11yResult.value : unavailableCategory(),
-        };
-
-        const allCategories: AuditCategories = { ...fastCategories, ...slowCategories };
-        const overallScore = computeOverallScore(allCategories);
-
-        // Save full result to Supabase for shareable link (non-blocking)
-        let shareId: string | undefined;
-        let shareUrl: string | undefined;
+      // ── Single-category retry ──────────────────────────────────────────────
+      if (onlyCategory) {
         try {
-          shareId = await saveAuditResult({ url: urlStr, scannedAt, overallScore, categories: allCategories });
-          shareUrl = `${getSiteOrigin(request)}/audit/${shareId}`;
+          switch (onlyCategory) {
+            case 'seo':
+            case 'trust':
+            case 'ux': {
+              const html = await fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS)).catch(() => null);
+              const result = html
+                ? onlyCategory === 'seo'   ? runSeoChecks(html.$)
+                : onlyCategory === 'trust' ? runTrustChecks(urlStr, html.$)
+                                           : runUxChecks(html.$)
+                : unavailableCategory();
+              emit({ type: 'category', key: onlyCategory, result });
+              break;
+            }
+            case 'performance': {
+              const ps = await fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)).catch(() => null);
+              emit({ type: 'category', key: 'performance', result: ps ? runPerformanceChecks(ps) : unavailableCategory() });
+              break;
+            }
+            case 'mobile': {
+              const [ps, html] = await Promise.all([
+                fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)).catch(() => null),
+                fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS)).catch(() => null),
+              ]);
+              emit({ type: 'category', key: 'mobile', result: ps && html ? runMobileChecks(ps, html.$) : unavailableCategory() });
+              break;
+            }
+            case 'accessibility': {
+              const a11y = await runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS)).catch(() => null);
+              emit({ type: 'category', key: 'accessibility', result: a11y ?? unavailableCategory() });
+              break;
+            }
+          }
         } catch {
-          // Supabase unavailable - audit still works without share link
+          emit({ type: 'category', key: onlyCategory, result: unavailableCategory() });
         }
-
-        controller.enqueue(
-          sseEvent({ type: 'complete', categories: slowCategories, overallScore, shareId, shareUrl, scannedAt })
-        );
-
-      } catch {
-        // HTML fetch failed (bot block, bad HTML, etc.) - fall through to slow checks
-        // and return whatever we can get from PageSpeed alone.
-        try {
-          const [pageSpeedResult, a11yResult] = await Promise.allSettled([
-            fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)),
-            runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS)),
-          ]);
-
-          const pageSpeedData =
-            pageSpeedResult.status === 'fulfilled' ? pageSpeedResult.value : null;
-
-          // Without HTML we can't run mobile (needs Cheerio viewport check),
-          // so mark seo/trust/ux/mobile as unavailable and return what we have.
-          const allCategories: AuditCategories = {
-            seo: unavailableCategory(),
-            trust: unavailableCategory(),
-            ux: unavailableCategory(),
-            performance: pageSpeedData ? runPerformanceChecks(pageSpeedData) : unavailableCategory(),
-            mobile: unavailableCategory(),
-            accessibility: a11yResult.status === 'fulfilled' ? a11yResult.value : unavailableCategory(),
-          };
-
-          const overallScore = computeOverallScore(allCategories);
-
-          let shareId: string | undefined;
-          let shareUrl: string | undefined;
-          try {
-            shareId = await saveAuditResult({ url: urlStr, scannedAt, overallScore, categories: allCategories });
-            shareUrl = `${getSiteOrigin(request)}/audit/${shareId}`;
-          } catch { /* non-fatal */ }
-
-          controller.enqueue(
-            sseEvent({
-              type: 'complete',
-              categories: {
-                performance: allCategories.performance,
-                mobile: allCategories.mobile,    // unavailable (no HTML)
-                accessibility: allCategories.accessibility,
-              },
-              overallScore,
-              shareId,
-              shareUrl,
-              scannedAt,
-            })
-          );
-        } catch {
-          controller.enqueue(
-            sseEvent({ type: 'error', error: 'Something went wrong running the audit. Please try again.', status: 500 })
-          );
-        }
-      } finally {
+        emit({ type: 'done', overallScore: 0, scannedAt });
         controller.close();
+        return;
       }
+
+      // ── Full audit — all categories run in parallel, each emits when ready ─
+      //
+      // Dependency graph:
+      //   HTML  → SEO, Trust, UX
+      //   HTML + PageSpeed → Mobile
+      //   PageSpeed → Performance
+      //   Puppeteer → Accessibility (fully independent)
+      //
+      // We kick off all three fetches simultaneously, then emit each category
+      // the moment its dependencies resolve — no category waits for another.
+
+      const collected: Partial<AuditCategories> = {};
+
+      const htmlP       = fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS)).catch(() => null);
+      const pageSpeedP  = fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)).catch(() => null);
+      const a11yP       = runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS)).catch(() => null);
+
+      // HTML group — SEO, Trust, UX (fastest, ~1-3s)
+      const htmlGroup = htmlP.then(html => {
+        const seo   = html ? runSeoChecks(html.$)               : unavailableCategory();
+        const trust = html ? runTrustChecks(urlStr, html.$)     : unavailableCategory();
+        const ux    = html ? runUxChecks(html.$)                : unavailableCategory();
+        emit({ type: 'category', key: 'seo',   result: seo   });
+        emit({ type: 'category', key: 'trust', result: trust });
+        emit({ type: 'category', key: 'ux',    result: ux    });
+        collected.seo = seo; collected.trust = trust; collected.ux = ux;
+        return html;
+      });
+
+      // PageSpeed group — Performance immediately, Mobile once HTML also done
+      const pageSpeedGroup = Promise.all([pageSpeedP, htmlGroup]).then(([ps, html]) => {
+        const perf   = ps              ? runPerformanceChecks(ps)           : unavailableCategory();
+        const mobile = ps && html      ? runMobileChecks(ps, html.$)        : unavailableCategory();
+        emit({ type: 'category', key: 'performance', result: perf   });
+        emit({ type: 'category', key: 'mobile',      result: mobile });
+        collected.performance = perf; collected.mobile = mobile;
+      });
+
+      // Accessibility — fully independent
+      const a11yGroup = a11yP.then(a11y => {
+        const result = a11y ?? unavailableCategory();
+        emit({ type: 'category', key: 'accessibility', result });
+        collected.accessibility = result;
+      });
+
+      // Wait for everything, then emit the final done event
+      await Promise.allSettled([htmlGroup, pageSpeedGroup, a11yGroup]);
+
+      const overallScore = computeOverallScore(collected);
+
+      let shareId: string | undefined;
+      let shareUrl: string | undefined;
+      try {
+        shareId = await saveAuditResult({
+          url: urlStr, scannedAt, overallScore,
+          categories: collected as AuditCategories,
+        });
+        shareUrl = `${getSiteOrigin(request)}/audit/${shareId}`;
+      } catch { /* non-fatal */ }
+
+      emit({ type: 'done', overallScore, shareId, shareUrl, scannedAt });
+      controller.close();
     },
   });
 
@@ -326,7 +274,7 @@ export async function POST(request: NextRequest) {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
-      'X-Accel-Buffering': 'no', // Disable Nginx buffering so events flush immediately
+      'X-Accel-Buffering': 'no',
     },
   });
 }

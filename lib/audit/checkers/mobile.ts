@@ -34,11 +34,9 @@ export function runMobileChecks(data: PageSpeedResponse, $: CheerioAPI): Categor
     {
       id: 'content-width',
       label: 'Content fits screen width',
-      value:
-        contentWidth.score === null || contentWidth.score === 1
-          ? 'Content fits'
-          : 'Content overflows',
-      status: contentWidth.score === null || contentWidth.score === 1 ? 'pass' : 'fail',
+      // score == null catches both null (informational) and undefined (key absent from response)
+      value:  contentWidth.score == null || contentWidth.score === 1 ? 'Content fits' : 'Content overflows',
+      status: contentWidth.score == null || contentWidth.score === 1 ? 'pass' : 'fail',
       description: 'Content should not require horizontal scrolling on mobile.',
     },
     {
