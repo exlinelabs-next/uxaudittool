@@ -15,7 +15,6 @@ async function resolveEventTypeId(apiKey: string): Promise<number | null> {
       Authorization: `Bearer ${apiKey}`,
       'cal-api-version': '2024-06-14',
     },
-    // Cache at the fetch layer for 5 min
     next: { revalidate: 300 },
   });
 
@@ -29,7 +28,6 @@ async function resolveEventTypeId(apiKey: string): Promise<number | null> {
     cachedEventTypeId = match.id;
     return match.id;
   }
-
   return null;
 }
 
@@ -59,8 +57,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const timeZone = req.nextUrl.searchParams.get('timeZone') ?? 'UTC';
-    const url = `${BASE_URL}/slots/available?eventTypeId=${eventTypeId}&startTime=${date}T00:00:00Z&endTime=${date}T23:59:59Z&timeZone=${encodeURIComponent(timeZone)}`;
+    // Match exlinelabs.com exactly: no timeZone param, plain UTC window for the date
+    const url = `${BASE_URL}/slots/available?eventTypeId=${eventTypeId}&startTime=${date}T00:00:00Z&endTime=${date}T23:59:59Z`;
 
     const res = await fetch(url, {
       headers: {
@@ -70,21 +68,36 @@ export async function GET(req: NextRequest) {
     });
 
     if (!res.ok) {
+      const errorText = await res.text();
+      console.error('[calcom/slots] Cal.com error:', res.status, errorText);
       return NextResponse.json(
-        { success: false, message: 'Failed to fetch slots from Cal.com' },
+        { success: false, message: `Cal.com returned ${res.status}` },
         { status: res.status },
       );
     }
 
     const data = await res.json();
     const slotsData: Record<string, Array<{ time: string }>> = data.data?.slots ?? {};
-    const slotsForDate = slotsData[date] ?? [];
+
+    // Cal.com keys slots by the date in the response.
+    // Try the requested date first; fall back to first available key in case
+    // the API shifts the key by timezone.
+    const slotsForDate =
+      slotsData[date] ??
+      Object.values(slotsData).find(arr => arr.length > 0) ??
+      [];
+
+    // Also flatten all slots across all keys in case Cal.com splits across midnight
+    const allSlots: Array<{ time: string }> = Object.values(slotsData).flat();
+
+    console.log(`[calcom/slots] date=${date} keys=${Object.keys(slotsData).join(',')} count=${slotsForDate.length} total=${allSlots.length}`);
 
     return NextResponse.json({
       success: true,
-      data: { date, slots: slotsForDate, eventTypeId },
+      data: { date, slots: slotsForDate.length > 0 ? slotsForDate : allSlots, eventTypeId },
     });
-  } catch {
+  } catch (err) {
+    console.error('[calcom/slots] error:', err);
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 },
