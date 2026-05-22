@@ -587,8 +587,6 @@ function generatePdfHtml(
     color: #666;
   }
 </style>
-<!-- Auto-trigger print when the document is fully loaded -->
-<script>window.addEventListener('load', function() { setTimeout(function() { window.print(); }, 500); });</script>
 </head>
 <body>
 
@@ -689,16 +687,30 @@ export function exportPdf(
   const blob    = new Blob([html], { type: 'text/html;charset=utf-8' });
   const blobUrl = URL.createObjectURL(blob);
 
-  // Open as a regular link — not blocked by popup blockers.
-  // The HTML embeds a <script> that auto-triggers window.print() on load.
-  const a = document.createElement('a');
-  a.href   = blobUrl;
-  a.target = '_blank';
-  a.rel    = 'noopener noreferrer';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  // Load the report into a hidden off-screen iframe so the print/save-as-PDF
+  // dialog appears without opening a new tab or navigating away.
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText =
+    'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;opacity:0;pointer-events:none';
 
-  // Keep the blob alive long enough for the new tab to load, then release it
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
+  iframe.onload = () => {
+    try {
+      // Give the browser a tick to fully render the document before printing
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        // Remove the iframe once the dialog has been dismissed (or after a timeout)
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          URL.revokeObjectURL(blobUrl);
+        }, 5_000);
+      }, 300);
+    } catch {
+      // Fallback: some browsers block cross-context print — open in new tab instead
+      window.open(blobUrl, '_blank');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
+    }
+  };
+
+  document.body.appendChild(iframe);
+  iframe.src = blobUrl;
 }
