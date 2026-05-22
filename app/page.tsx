@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAudit } from '@/lib/hooks/useAudit';
 import { AuditInput } from '@/components/audit/AuditInput';
 import { AuditReport } from '@/components/audit/AuditReport';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { BookingModal } from '@/components/BookingModal';
 import { trackAuditStarted, trackAuditCompleted, trackAuditErrored } from '@/lib/analytics';
 
 /* ── Corner bracket decoration ───────────────────────────────────────────── */
@@ -43,6 +44,7 @@ const CATEGORIES = [
 export default function HomePage() {
   const { state, runAudit, retryCategory, reset } = useAudit();
   const startedAt = useRef<number>(0);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   // Drive every animation from this single boolean
   const active = state.status !== 'idle';
@@ -174,7 +176,7 @@ export default function HomePage() {
             }}
           >
             {/* Hero */}
-            <section className="flex flex-col items-center justify-center px-4 pt-16 pb-10 text-center">
+            <section className="flex flex-col items-center justify-center px-4 pt-10 sm:pt-16 pb-6 sm:pb-10 text-center">
 
               {/* Eyebrow pill */}
               <div
@@ -224,14 +226,16 @@ export default function HomePage() {
               {/* Social proof + CTA link */}
               <p style={{ fontSize: 13, color: 'var(--wb-muted)', marginBottom: '1.5rem' }}>
                 Trusted by businesses and developers to identify what is holding their websites back.{' '}
-                <a
-                  href="https://exlinelabs.com/contact"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: 'var(--wb-accent)', textDecoration: 'underline', textUnderlineOffset: 3, fontWeight: 600 }}
+                <button
+                  onClick={() => setBookingOpen(true)}
+                  style={{
+                    background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                    color: 'var(--wb-accent)', textDecoration: 'underline', textUnderlineOffset: 3,
+                    fontWeight: 600, fontSize: 'inherit',
+                  }}
                 >
                   Book a free discovery call
-                </a>
+                </button>
               </p>
 
               {/*
@@ -398,6 +402,8 @@ export default function HomePage() {
         {/* Audit report */}
         <AuditReport state={state} onRerun={() => runAudit(state.url)} onRetryCategory={retryCategory} />
       </div>
+
+      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} />}
     </div>
   );
 }
