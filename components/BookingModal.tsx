@@ -215,7 +215,7 @@ export function BookingModal({ onClose }: Props) {
       {/* Modal shell */}
       <div
         className="w-full bg-white rounded-xl shadow-2xl flex flex-col"
-        style={{ maxWidth: 'min(90dvw, 960px)', maxHeight: '85dvh', overflow: 'hidden' }}
+        style={{ maxWidth: 'min(95dvw, 1040px)', maxHeight: '90dvh', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
       >
         {/* ── Header ────────────────────────────────────────────────────── */}
@@ -309,7 +309,7 @@ export function BookingModal({ onClose }: Props) {
                 </div>
 
                 {/* Day cells — same 7-column grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
                   {blankDays.map((_, i) => (
                     <div key={`b${i}`}>
                       <div style={{ aspectRatio: '1/1', borderRadius: 12, background: '#f9fafb' }} />
@@ -501,13 +501,13 @@ export function BookingModal({ onClose }: Props) {
             border-right: 1px solid rgba(0,0,0,0.1);
           }
         }
-        /* Calendar panel: full-width on mobile, fixed 320px on desktop */
+        /* Calendar panel: full-width on mobile, fixed 400px on desktop */
         .cal-calendar-panel {
           width: 100%;
         }
         @media (min-width: 1024px) {
           .cal-calendar-panel {
-            width: 320px;
+            width: 400px;
           }
         }
       `}</style>
