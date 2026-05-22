@@ -38,63 +38,51 @@ export function BookingModal({ onClose }: Props) {
         padding: '1rem',
       }}
     >
+      {/* Modal shell — no header, just the iframe */}
       <div
         style={{
+          position: 'relative',
           width: '100%', maxWidth: 900,
           height: 'min(90dvh, 700px)',
           background: '#fff',
           borderRadius: 12,
           overflow: 'hidden',
           boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-          display: 'flex', flexDirection: 'column',
         }}
       >
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '14px 18px',
-            borderBottom: '1px solid #e5e5e5',
-            background: '#fafafa',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div
-              style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: '#C8F135',
-              }}
-            />
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#0a0a0a', margin: 0 }}>
-              Book a free discovery call
-            </p>
-            <span style={{ fontSize: 12, color: '#888', marginLeft: 4 }}>
-              with Exline Labs &middot; 30 min
-            </span>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close booking modal"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: '#666', padding: '4px', borderRadius: 4,
-              display: 'flex', alignItems: 'center',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Cal.com iframe */}
+        {/* Cal.com iframe — extra height so the Cal.com footer strip is pushed out of view */}
         <iframe
           src="https://cal.com/exlinelabs/free-ux-audit-session?embed=true&embedType=inline&theme=light"
-          style={{ flex: 1, width: '100%', border: 'none' }}
+          style={{
+            position: 'absolute', top: 0, left: 0,
+            width: '100%',
+            /* ~52 px taller than the container hides the Cal.com branding row at the bottom */
+            height: 'calc(100% + 52px)',
+            border: 'none',
+          }}
           title="Book a free discovery call with Exline Labs"
           loading="lazy"
         />
+
+        {/* Floating close button — top-right corner, above the iframe */}
+        <button
+          onClick={onClose}
+          aria-label="Close booking modal"
+          style={{
+            position: 'absolute', top: 12, right: 12, zIndex: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 32, height: 32, borderRadius: '50%',
+            background: 'rgba(0,0,0,0.45)', border: 'none', cursor: 'pointer',
+            color: '#fff', backdropFilter: 'blur(4px)',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.7)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.45)')}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 3l8 8M11 3L3 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+        </button>
       </div>
     </div>
   );
