@@ -23,16 +23,22 @@ export function useScreenshotPrevention() {
   useEffect(() => {
     // 1. Keyboard shortcuts
     function onKeyDown(e: KeyboardEvent) {
+      // Use e.code (physical key) not e.key — when Shift is held, e.key for '4' becomes '$', '3' → '#', '5' → '%'
       const mac = e.metaKey;
-      const win = e.ctrlKey || e.key === 'PrintScreen';
 
-      // Mac: Cmd+Shift+3 (full), Cmd+Shift+4 (area), Cmd+Shift+5 (tools)
-      if (mac && e.shiftKey && ['3', '4', '5'].includes(e.key)) {
+      // Mac: Cmd+Shift+3 (full screen), Cmd+Shift+4 (area/crosshair), Cmd+Shift+5 (tools)
+      if (mac && e.shiftKey && ['Digit3', 'Digit4', 'Digit5'].includes(e.code)) {
         trigger();
         return;
       }
-      // Windows: PrintScreen, Win+Shift+S snip tool
-      if (e.key === 'PrintScreen' || (win && e.shiftKey && e.key.toLowerCase() === 's')) {
+      // Windows / Linux: PrintScreen alone, or Win+Shift+S (Snipping Tool)
+      if (e.key === 'PrintScreen') {
+        trigger();
+        return;
+      }
+      // Win+Shift+S — metaKey doesn't fire on Windows for the Win key,
+      // but some browsers report it; also catch Ctrl+Shift+S as a common alias
+      if (e.shiftKey && (e.metaKey || e.ctrlKey) && e.code === 'KeyS') {
         trigger();
         return;
       }

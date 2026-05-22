@@ -167,7 +167,7 @@ export function EmailReportModal({ format, url, overallScore, categories, scanne
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}
               >
-                <span style={{ color: 'var(--wb-dim)' }}>Audit for: </span>
+                <span style={{ color: 'var(--wb-muted)' }}>Audit for: </span>
                 <span style={{ fontWeight: 600, color: 'var(--wb-text)' }}>{url}</span>
               </div>
 
@@ -201,7 +201,7 @@ export function EmailReportModal({ format, url, overallScore, categories, scanne
               )}
 
               {/* Privacy note */}
-              <p style={{ fontSize: 11, color: 'var(--wb-dim)', marginBottom: 16, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: 'var(--wb-text)', opacity: 0.6, marginBottom: 16, lineHeight: 1.6 }}>
                 We will send your report to this address. We never share your email or send marketing without permission.
               </p>
 
