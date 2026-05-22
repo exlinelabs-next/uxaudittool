@@ -1,8 +1,7 @@
 export function AuditCTA({
-  href = 'https://webbeet.studio/contact',
   label = 'Book a free discovery call',
 }: {
-  href?: string;
+  href?: string;  // kept for backwards compat but Cal.com takes precedence
   label?: string;
 }) {
   return (
@@ -18,18 +17,19 @@ export function AuditCTA({
           We will walk through your results and build a prioritised action plan.
         </p>
       </div>
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
+      {/* Cal.com embed trigger — opens the booking modal */}
+      <button
+        data-cal-namespace="free-ux-audit-session"
+        data-cal-link="exlinelabs/free-ux-audit-session"
+        data-cal-config='{"layout":"month_view"}'
         className="inline-flex items-center gap-2 px-4 py-2 rounded text-xs font-semibold shrink-0 transition-opacity hover:opacity-90"
-        style={{ background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)' }}
+        style={{ background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)', border: 'none', cursor: 'pointer' }}
       >
         {label}
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </a>
+      </button>
     </div>
   );
 }
