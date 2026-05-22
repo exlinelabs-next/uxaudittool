@@ -238,8 +238,8 @@ export function BookingModal({ onClose }: Props) {
 
             {/* ── Panel 1: Event info ──────────────────────────────────── */}
             <div
-              className="px-6 md:px-8 py-8 flex flex-col gap-2 flex-shrink-0 border-b lg:border-b-0 lg:border-r"
-              style={{ borderColor: 'rgba(0,0,0,0.1)', minWidth: 200 }}
+              className="px-6 md:px-8 py-8 flex flex-col gap-2 flex-shrink-0 cal-panel-divider"
+              style={{ minWidth: 200 }}
             >
               {/* Avatar */}
               <div className="w-10 h-10 rounded-full flex items-center justify-center mb-1 overflow-hidden bg-gray-200 flex-shrink-0">
@@ -276,8 +276,8 @@ export function BookingModal({ onClose }: Props) {
 
             {/* ── Panel 2: Calendar grid ───────────────────────────────── */}
             <div
-              className="flex-shrink-0 bg-white border-b lg:border-b-0 lg:border-r"
-              style={{ borderColor: 'rgba(0,0,0,0.1)', minWidth: 260 }}
+              className="flex-shrink-0 bg-white cal-panel-divider"
+              style={{ minWidth: 260 }}
             >
               {/* Month nav */}
               <div className="flex items-center justify-between py-6 px-8" style={{ borderBottom: '1px solid #f3f4f6' }}>
@@ -383,11 +383,11 @@ export function BookingModal({ onClose }: Props) {
                       style={{
                         minHeight: 40, padding: '8px 12px',
                         border: '1px solid #d1d5db',
-                        background: 'transparent', color: '#374151',
+                        background: '#ffffff', color: '#374151',
                         fontSize: 14, cursor: 'pointer',
                       }}
                       onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#f5f3ff'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#c4b5fd'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#d1d5db'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#ffffff'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#d1d5db'; }}
                     >
                       {formatTime(slot.time)}
                     </button>
@@ -439,16 +439,16 @@ export function BookingModal({ onClose }: Props) {
                 ) : (
                   <form onSubmit={submitBooking}>
                     <Field label="Your Name *">
-                      <input type="text" required placeholder="Enter your name here…" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} disabled={bookingLoading} />
+                      <input className="cal-input" type="text" required placeholder="Enter your name here…" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} disabled={bookingLoading} />
                     </Field>
                     <Field label="Email Address *">
-                      <input type="email" required placeholder="Enter your email…" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} disabled={bookingLoading} />
+                      <input className="cal-input" type="email" required placeholder="Enter your email…" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} disabled={bookingLoading} />
                     </Field>
                     <Field label="Timezone">
-                      <input type="text" readOnly value={form.timezone} style={{ background: '#f9fafb', cursor: 'not-allowed' }} />
+                      <input className="cal-input" type="text" readOnly value={form.timezone} style={{ background: '#f9fafb', cursor: 'not-allowed' }} />
                     </Field>
                     <Field label="Additional Notes (Optional)" last>
-                      <textarea rows={3} placeholder="Tell us what you'd like to discuss…" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} disabled={bookingLoading} style={{ resize: 'none' }} />
+                      <textarea className="cal-input" rows={3} placeholder="Tell us what you'd like to discuss…" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} disabled={bookingLoading} style={{ resize: 'none' }} />
                     </Field>
 
                     {bookingError && (
@@ -493,6 +493,15 @@ export function BookingModal({ onClose }: Props) {
           outline: none; border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,0.15);
         }
         .cal-input:disabled { opacity: 0.6; cursor: not-allowed; }
+        .cal-panel-divider {
+          border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        @media (min-width: 1024px) {
+          .cal-panel-divider {
+            border-bottom: none;
+            border-right: 1px solid rgba(0,0,0,0.1);
+          }
+        }
       `}</style>
     </div>
   );
