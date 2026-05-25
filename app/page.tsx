@@ -281,7 +281,7 @@ export default function HomePage() {
             </section>
 
             {/* Category breakdown grid */}
-            <section style={{ width: '100%', padding: '0 0 4rem' }}>
+            <section className="px-4 sm:px-8 lg:px-[70px]" style={{ width: '100%', paddingBottom: '4rem' }}>
               <div className="flex items-center gap-3 mb-4">
                 <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--wb-muted)' }}>
                   What we check
