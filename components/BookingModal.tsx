@@ -215,7 +215,7 @@ export function BookingModal({ onClose }: Props) {
       {/* Modal shell */}
       <div
         className="w-full bg-white rounded-xl shadow-2xl flex flex-col"
-        style={{ maxWidth: 'min(95dvw, 1040px)', maxHeight: '90dvh', overflow: 'hidden' }}
+        style={{ maxWidth: 'min(95dvw, 1200px)', maxHeight: '90dvh', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
       >
         {/* ── Header ────────────────────────────────────────────────────── */}
@@ -238,8 +238,7 @@ export function BookingModal({ onClose }: Props) {
 
             {/* ── Panel 1: Event info ──────────────────────────────────── */}
             <div
-              className="px-6 md:px-8 py-8 flex flex-col gap-2 flex-shrink-0 cal-panel-divider"
-              style={{ minWidth: 200 }}
+              className="px-6 md:px-8 py-8 flex flex-col gap-2 flex-shrink-0 cal-panel-divider cal-info-panel"
             >
               {/* Avatar */}
               <div className="w-10 h-10 rounded-full flex items-center justify-center mb-1 overflow-hidden bg-gray-200 flex-shrink-0">
@@ -353,7 +352,7 @@ export function BookingModal({ onClose }: Props) {
               </div>
 
               {/* Slot list */}
-              <div className="flex flex-col gap-3" style={{ maxHeight: '50dvh', overflowY: 'auto', paddingRight: 4 }}>
+              <div className="flex flex-col gap-3" style={{ maxHeight: 'calc(90dvh - 180px)', overflowY: 'auto', paddingRight: 4 }}>
                 {loadingSlots ? (
                   <div className="flex items-center justify-center rounded-lg py-3 animate-pulse" style={{ border: '1px solid #e5e7eb', background: '#f9fafb' }}>
                     <span style={{ fontSize: 14, color: '#9ca3af' }}>Loading slots…</span>
@@ -501,13 +500,32 @@ export function BookingModal({ onClose }: Props) {
             border-right: 1px solid rgba(0,0,0,0.1);
           }
         }
-        /* Calendar panel: full-width on mobile, fixed 400px on desktop */
+        /* Info panel: full-width on mobile, fixed widths on desktop */
+        .cal-info-panel {
+          width: 100%;
+        }
+        @media (min-width: 1024px) {
+          .cal-info-panel {
+            width: 220px;
+          }
+        }
+        @media (min-width: 1280px) {
+          .cal-info-panel {
+            width: 260px;
+          }
+        }
+        /* Calendar panel: full-width on mobile, fixed widths on desktop */
         .cal-calendar-panel {
           width: 100%;
         }
         @media (min-width: 1024px) {
           .cal-calendar-panel {
             width: 400px;
+          }
+        }
+        @media (min-width: 1280px) {
+          .cal-calendar-panel {
+            width: 460px;
           }
         }
       `}</style>
