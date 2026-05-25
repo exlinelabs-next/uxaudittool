@@ -17,15 +17,20 @@ import type {
 } from '@/lib/audit/types';
 
 // Per-operation timeouts.
+// Kept under 55s so the combined stream stays well below the 60s default
+// proxy_read_timeout on nginx / equivalent on Traefik and Caddy.
 const HTML_TIMEOUT_MS       = 12_000;
-const PAGESPEED_TIMEOUT_MS  = 120_000;
-const A11Y_TIMEOUT_MS       =  90_000;
+const PAGESPEED_TIMEOUT_MS  = 55_000;
+const A11Y_TIMEOUT_MS       = 55_000;
 
 const encoder = new TextEncoder();
 
 function sseEvent(data: AuditStreamEvent): Uint8Array {
   return encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
 }
+
+/** SSE comment — invisible to the client but resets any proxy read-timeout. */
+const SSE_PING = encoder.encode(': ping\n\n');
 
 function computeOverallScore(categories: Partial<AuditCategories>): number {
   const scores = Object.values(categories)
@@ -162,6 +167,13 @@ export async function POST(request: NextRequest) {
         try { controller.enqueue(sseEvent(event)); } catch { /* stream closed */ }
       };
 
+      // Heartbeat: SSE comment sent every 15 s to prevent reverse-proxy
+      // read-timeout from killing long-running PageSpeed / Puppeteer operations.
+      // nginx default proxy_read_timeout = 60 s; Traefik/Caddy similar.
+      const heartbeat = setInterval(() => {
+        try { controller.enqueue(SSE_PING); } catch { /* already closed */ }
+      }, 15_000);
+
       // ── Single-category retry ──────────────────────────────────────────────
       if (onlyCategory) {
         try {
@@ -179,20 +191,23 @@ export async function POST(request: NextRequest) {
               break;
             }
             case 'performance': {
-              const ps = await fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)).catch(() => null);
+              const ps = await fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS))
+                .catch((e) => { console.error('[audit] PageSpeed error:', e instanceof Error ? e.message : e); return null; });
               emit({ type: 'category', key: 'performance', result: ps ? runPerformanceChecks(ps) : unavailableCategory() });
               break;
             }
             case 'mobile': {
               const [ps, html] = await Promise.all([
-                fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)).catch(() => null),
+                fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS))
+                  .catch((e) => { console.error('[audit] PageSpeed error:', e instanceof Error ? e.message : e); return null; }),
                 fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS)).catch(() => null),
               ]);
               emit({ type: 'category', key: 'mobile', result: ps && html ? runMobileChecks(ps, html.$) : unavailableCategory() });
               break;
             }
             case 'accessibility': {
-              const a11y = await runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS)).catch(() => null);
+              const a11y = await runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS))
+                .catch((e) => { console.error('[audit] Accessibility error:', e instanceof Error ? e.message : e); return null; });
               emit({ type: 'category', key: 'accessibility', result: a11y ?? unavailableCategory() });
               break;
             }
@@ -200,6 +215,7 @@ export async function POST(request: NextRequest) {
         } catch {
           emit({ type: 'category', key: onlyCategory, result: unavailableCategory() });
         }
+        clearInterval(heartbeat);
         emit({ type: 'done', overallScore: 0, scannedAt });
         controller.close();
         return;
@@ -210,17 +226,19 @@ export async function POST(request: NextRequest) {
       // Dependency graph:
       //   HTML  → SEO, Trust, UX
       //   HTML + PageSpeed → Mobile
-      //   PageSpeed → Performance
-      //   Puppeteer → Accessibility (fully independent)
+      //   PageSpeed only  → Performance  (decoupled from HTML)
+      //   Puppeteer       → Accessibility (fully independent)
       //
       // We kick off all three fetches simultaneously, then emit each category
       // the moment its dependencies resolve — no category waits for another.
 
       const collected: Partial<AuditCategories> = {};
 
-      const htmlP       = fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS)).catch(() => null);
-      const pageSpeedP  = fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS)).catch(() => null);
-      const a11yP       = runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS)).catch(() => null);
+      const htmlP      = fetchHtml(urlStr, AbortSignal.timeout(HTML_TIMEOUT_MS)).catch(() => null);
+      const pageSpeedP = fetchPageSpeedData(urlStr, AbortSignal.timeout(PAGESPEED_TIMEOUT_MS))
+        .catch((e) => { console.error('[audit] PageSpeed error:', e instanceof Error ? e.message : e); return null; });
+      const a11yP      = runAccessibilityChecks(urlStr, AbortSignal.timeout(A11Y_TIMEOUT_MS))
+        .catch((e) => { console.error('[audit] Accessibility error:', e instanceof Error ? e.message : e); return null; });
 
       // HTML group — SEO, Trust, UX (fastest, ~1-3s)
       const htmlGroup = htmlP.then(html => {
@@ -234,13 +252,18 @@ export async function POST(request: NextRequest) {
         return html;
       });
 
-      // PageSpeed group — Performance immediately, Mobile once HTML also done
-      const pageSpeedGroup = Promise.all([pageSpeedP, htmlGroup]).then(([ps, html]) => {
-        const perf   = ps              ? runPerformanceChecks(ps)           : unavailableCategory();
-        const mobile = ps && html      ? runMobileChecks(ps, html.$)        : unavailableCategory();
-        emit({ type: 'category', key: 'performance', result: perf   });
-        emit({ type: 'category', key: 'mobile',      result: mobile });
-        collected.performance = perf; collected.mobile = mobile;
+      // Performance — only needs PageSpeed (does NOT wait for htmlGroup)
+      const perfGroup = pageSpeedP.then(ps => {
+        const perf = ps ? runPerformanceChecks(ps) : unavailableCategory();
+        emit({ type: 'category', key: 'performance', result: perf });
+        collected.performance = perf;
+      });
+
+      // Mobile — needs both PageSpeed and HTML
+      const mobileGroup = Promise.all([pageSpeedP, htmlGroup]).then(([ps, html]) => {
+        const mobile = ps && html ? runMobileChecks(ps, html.$) : unavailableCategory();
+        emit({ type: 'category', key: 'mobile', result: mobile });
+        collected.mobile = mobile;
       });
 
       // Accessibility — fully independent
@@ -251,7 +274,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Wait for everything, then emit the final done event
-      await Promise.allSettled([htmlGroup, pageSpeedGroup, a11yGroup]);
+      await Promise.allSettled([htmlGroup, perfGroup, mobileGroup, a11yGroup]);
 
       const overallScore = computeOverallScore(collected);
 
@@ -265,6 +288,7 @@ export async function POST(request: NextRequest) {
         shareUrl = `${getSiteOrigin(request)}/audit/${shareId}`;
       } catch { /* non-fatal */ }
 
+      clearInterval(heartbeat);
       emit({ type: 'done', overallScore, shareId, shareUrl, scannedAt });
       controller.close();
     },
