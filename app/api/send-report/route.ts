@@ -1,38 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 import { generateMarkdown, generatePdfHtml } from '@/lib/export';
 import type { AuditCategories } from '@/lib/audit/types';
 
-const BREVO_API  = 'https://api.brevo.com/v3/smtp/email';
 const FROM_NAME  = process.env.MAIL_FROM_NAME    ?? 'Exline Labs';
-const FROM_EMAIL = process.env.MAIL_FROM_ADDRESS ?? 'hello@exlinelabs.com';
+const FROM_EMAIL = process.env.MAIL_FROM_ADDRESS ?? process.env.SMTP_USER ?? '';
 
-async function sendViaBrevo(opts: {
+function createTransporter() {
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!user || !pass) throw new Error('SMTP_USER / SMTP_PASS not configured');
+
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // SSL
+    auth: { user, pass },
+  });
+}
+
+async function sendViaSMTP(opts: {
   to: string;
   subject: string;
   html: string;
   attachmentName: string;
-  attachmentContent: string; // base64
+  attachmentContent: Buffer;
   attachmentType: string;
 }) {
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) throw new Error('BREVO_API_KEY is not set');
-
-  const res = await fetch(BREVO_API, {
-    method: 'POST',
-    headers: { 'api-key': apiKey, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({
-      sender:      { name: FROM_NAME, email: FROM_EMAIL },
-      to:          [{ email: opts.to }],
-      subject:     opts.subject,
-      htmlContent: opts.html,
-      attachment:  [{ name: opts.attachmentName, content: opts.attachmentContent }],
-    }),
+  const transporter = createTransporter();
+  await transporter.sendMail({
+    from:        `"${FROM_NAME}" <${FROM_EMAIL}>`,
+    to:          opts.to,
+    subject:     opts.subject,
+    html:        opts.html,
+    attachments: [{
+      filename:    opts.attachmentName,
+      content:     opts.attachmentContent,
+      contentType: opts.attachmentType,
+    }],
   });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Brevo ${res.status}: ${body}`);
-  }
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -167,7 +173,7 @@ function buildEmailHtml(
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.BREVO_API_KEY) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     return NextResponse.json({ error: 'Email delivery not configured' }, { status: 503 });
   }
 
@@ -231,12 +237,12 @@ export async function POST(req: NextRequest) {
   const emailHtml = buildEmailHtml(url, overallScore, cats, format);
 
   try {
-    await sendViaBrevo({
+    await sendViaSMTP({
       to:                email,
       subject,
       html:              emailHtml,
       attachmentName:    attachmentFilename,
-      attachmentContent: Buffer.from(attachmentContent, 'utf-8').toString('base64'),
+      attachmentContent: Buffer.from(attachmentContent, 'utf-8'),
       attachmentType,
     });
     return NextResponse.json({ success: true });
