@@ -11,12 +11,11 @@ function createTransporter() {
   const pass = process.env.SMTP_PASS;
   if (!user || !pass) throw new Error('SMTP_USER / SMTP_PASS not configured');
 
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // SSL
-    auth: { user, pass },
-  });
+  const host   = process.env.SMTP_HOST ?? 'smtp-relay.brevo.com';
+  const port   = parseInt(process.env.SMTP_PORT ?? '587', 10);
+  const secure = port === 465; // 465 = implicit TLS, 587 = STARTTLS
+
+  return nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
 }
 
 async function sendViaSMTP(opts: {
