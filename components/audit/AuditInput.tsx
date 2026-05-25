@@ -40,9 +40,9 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
         >
           {/* Protocol prefix */}
           <span
-            className="px-3 py-2.5 font-mono shrink-0 select-none"
+            className="px-4 py-3 font-mono shrink-0 select-none"
             style={{
-              fontSize: 13,
+              fontSize: 14,
               color: 'var(--wb-muted)',
               borderRight: '1px solid var(--wb-border)',
               background: 'var(--wb-surface-2)',
@@ -60,8 +60,8 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
             disabled={isRunning}
             autoComplete="url"
             spellCheck={false}
-            className="flex-1 px-3 py-2.5 outline-none bg-transparent disabled:opacity-50"
-            style={{ fontSize: 14, color: 'var(--wb-text)' }}
+            className="flex-1 px-4 py-3 outline-none bg-transparent disabled:opacity-50"
+            style={{ fontSize: 15, color: 'var(--wb-text)' }}
           />
 
           {/* Status text while running */}
@@ -75,8 +75,8 @@ export function AuditInput({ onSubmit, onReset, status, error, currentUrl }: Aud
           <button
             type="submit"
             disabled={isRunning || !value.trim()}
-            className="px-4 py-2.5 shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ fontSize: 13, fontWeight: 600, background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)' }}
+            className="px-5 py-3 shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ fontSize: 14, fontWeight: 600, background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)' }}
           >
             {isRunning ? (
               <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">
