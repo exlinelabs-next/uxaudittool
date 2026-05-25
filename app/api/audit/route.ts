@@ -19,7 +19,7 @@ import type {
 // Per-operation timeouts.
 const HTML_TIMEOUT_MS       = 12_000;
 const PAGESPEED_TIMEOUT_MS  = 120_000;
-const A11Y_TIMEOUT_MS       =  60_000;
+const A11Y_TIMEOUT_MS       =  90_000;
 
 const encoder = new TextEncoder();
 
