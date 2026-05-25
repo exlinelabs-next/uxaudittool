@@ -49,12 +49,23 @@ export async function runAccessibilityChecks(
 
     const { executablePath, args } = await getBrowserConfig();
 
-    browser = await puppeteer.launch({
-      executablePath,
-      args,
-      headless: true,
-      defaultViewport: { width: 1280, height: 800 },
-    });
+    // Launch with an explicit 30 s timeout so a hanging Chromium startup
+    // doesn't silently consume the entire operation budget.
+    const LAUNCH_TIMEOUT_MS = 30_000;
+    browser = await Promise.race([
+      puppeteer.launch({
+        executablePath,
+        args,
+        // 'shell' skips the full rendering pipeline - faster cold start,
+        // lower memory, and sufficient for DOM-based axe-core analysis.
+        headless: 'shell',
+        defaultViewport: { width: 1280, height: 800 },
+        timeout: LAUNCH_TIMEOUT_MS,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Chromium launch timed out after ${LAUNCH_TIMEOUT_MS}ms`)), LAUNCH_TIMEOUT_MS)
+      ),
+    ]);
 
     if (signal?.aborted) throw new Error('Aborted after launch');
 
@@ -192,6 +203,9 @@ export async function runAccessibilityChecks(
     ];
 
     return { score: categoryScore(checks), checks };
+  } catch (err) {
+    console.error('[accessibility] check failed:', err instanceof Error ? err.message : String(err));
+    throw err;
   } finally {
     if (browser) await browser.close().catch(() => null);
   }
