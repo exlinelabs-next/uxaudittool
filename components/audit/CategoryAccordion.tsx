@@ -110,7 +110,7 @@ export function CategoryAccordion({
       {/* Header row */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left"
+        className="w-full flex items-center gap-3 px-5 py-4 text-left"
         style={{
           background: open ? 'var(--wb-surface)' : 'transparent',
           borderBottom: open ? '1px solid var(--wb-border)' : '1px solid transparent',
@@ -131,7 +131,7 @@ export function CategoryAccordion({
         </svg>
 
         {/* Label */}
-        <span className="flex-1 text-left" style={{ fontSize: 14, fontWeight: 600, color: 'var(--wb-text)' }}>
+        <span className="flex-1 text-left" style={{ fontSize: 15, fontWeight: 600, color: 'var(--wb-text)' }}>
           {label}
         </span>
 
@@ -188,7 +188,7 @@ export function CategoryAccordion({
                   {['Check', 'Impact', 'Status', 'Value', 'Notes'].map(h => (
                     <th
                       key={h}
-                      className={`px-4 py-2 text-left font-medium${h === 'Impact' ? ' hidden sm:table-cell' : ''}`}
+                      className={`px-5 py-3 text-left font-medium${h === 'Impact' ? ' hidden sm:table-cell' : ''}`}
                       style={{ color: 'var(--wb-muted)', background: 'var(--wb-surface-2)' }}
                     >
                       {h}
@@ -206,7 +206,7 @@ export function CategoryAccordion({
                     }}
                   >
                     {/* Check name */}
-                    <td className="px-4 py-2.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--wb-text)', width: '25%' }}>
+                    <td className="px-5 py-3" style={{ fontSize: 14, fontWeight: 500, color: 'var(--wb-text)', width: '25%' }}>
                       <div className="flex items-center gap-2">
                         <StatusDot status={check.status} />
                         {check.label}
@@ -214,7 +214,7 @@ export function CategoryAccordion({
                     </td>
 
                     {/* Impact */}
-                    <td className="px-4 py-2.5 hidden sm:table-cell" style={{ width: '9%' }}>
+                    <td className="px-5 py-3 hidden sm:table-cell" style={{ width: '9%' }}>
                       <span
                         className="font-mono text-xs font-semibold"
                         style={{
@@ -234,12 +234,12 @@ export function CategoryAccordion({
                     </td>
 
                     {/* Status */}
-                    <td className="px-4 py-2.5" style={{ width: '11%' }}>
+                    <td className="px-5 py-3" style={{ width: '11%' }}>
                       <StatusBadge status={check.status} />
                     </td>
 
                     {/* Value */}
-                    <td className="px-4 py-2.5" style={{ width: '28%' }}>
+                    <td className="px-5 py-3" style={{ width: '28%' }}>
                       <span
                         style={{
                           fontSize: 12,
@@ -255,7 +255,7 @@ export function CategoryAccordion({
                     </td>
 
                     {/* Description */}
-                    <td className="px-4 py-2.5" style={{ fontSize: 12, color: 'var(--wb-muted)', width: '32%' }}>
+                    <td className="px-5 py-3" style={{ fontSize: 13, color: 'var(--wb-muted)', width: '32%' }}>
                       {check.description}
                     </td>
                   </tr>

@@ -89,9 +89,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Footer */}
         <footer
           data-cookie-link
+          className="px-4 sm:px-8 lg:px-[70px]"
           style={{
             borderTop: '1px solid var(--wb-border)',
-            padding: '0.75rem 1.5rem',
+            paddingTop: '0.875rem',
+            paddingBottom: '0.875rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -99,25 +101,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             gap: '0.5rem',
           }}
         >
-          <span style={{ fontSize: 12, color: 'var(--wb-muted)' }}>
+          <span style={{ fontSize: 13, color: 'var(--wb-muted)' }}>
             Powered by{' '}
             <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'none', fontWeight: 600 }}>Exline Labs</a>
             {' '}&mdash; &copy; {new Date().getFullYear()}. Free to use.
           </span>
           <nav aria-label="Footer navigation" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <a href="mailto:info@exlinelabs.com" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
+            <a href="mailto:info@exlinelabs.com" style={{ fontSize: 13, color: 'var(--wb-muted)', textDecoration: 'none' }}>
               info@exlinelabs.com
             </a>
-            <a href="/privacy" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
+            <a href="/privacy" style={{ fontSize: 13, color: 'var(--wb-muted)', textDecoration: 'none' }}>
               Privacy Policy
             </a>
-            <a href="/terms" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
+            <a href="/terms" style={{ fontSize: 13, color: 'var(--wb-muted)', textDecoration: 'none' }}>
               Terms
             </a>
-            <a href="https://www.linkedin.com/company/exlinelabs/posts/?feedView=all" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
+            <a href="https://www.linkedin.com/company/exlinelabs/posts/?feedView=all" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--wb-muted)', textDecoration: 'none' }}>
               LinkedIn
             </a>
-            <a href="https://github.com/Exline-Labs" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--wb-muted)', textDecoration: 'none' }}>
+            <a href="https://github.com/Exline-Labs" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--wb-muted)', textDecoration: 'none' }}>
               GitHub
             </a>
             <CookiePreferencesLink />

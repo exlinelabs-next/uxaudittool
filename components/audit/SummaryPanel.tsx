@@ -48,8 +48,8 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
     >
       {/* Top bar: URL + meta */}
       <div
-        className="flex flex-wrap items-center gap-3 px-4 py-3"
-        style={{ borderBottom: '1px solid var(--wb-border)', background: 'var(--wb-surface-2)', fontSize: 13 }}
+        className="flex flex-wrap items-center gap-3 px-5 py-4"
+        style={{ borderBottom: '1px solid var(--wb-border)', background: 'var(--wb-surface-2)', fontSize: 14 }}
       >
         <span className="font-mono font-medium" style={{ color: 'var(--wb-text)' }}>{url}</span>
         {dateStr && <span style={{ color: 'var(--wb-muted)', fontSize: 12 }}>Scanned {dateStr}</span>}
@@ -158,7 +158,7 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
               <div key={key} className="flex items-center gap-3">
                 <span
                   className="font-medium shrink-0"
-                  style={{ fontSize: 13, color: 'var(--wb-muted)', width: 92 }}
+                  style={{ fontSize: 14, color: 'var(--wb-muted)', width: 110 }}
                 >
                   {label}
                 </span>

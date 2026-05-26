@@ -52,7 +52,7 @@ html, body {
   color: var(--wb-text);
   font-family: var(--font-sans, system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 /* Scrollbar styling */

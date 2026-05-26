@@ -74,8 +74,8 @@ export default function HomePage() {
         style={{ background: 'var(--wb-bg)', borderBottom: '1px solid var(--wb-border)' }}
       >
         <div
-          className="max-w-5xl mx-auto w-full px-4 sm:px-6 flex items-center gap-3"
-          style={{ height: 52 }}
+          className="w-full px-4 sm:px-8 lg:px-[70px] flex items-center gap-3"
+          style={{ height: 56 }}
         >
           {/* Logo / primary nav */}
           <nav aria-label="Main navigation">
@@ -83,10 +83,10 @@ export default function HomePage() {
               href="/"
               style={{ color: 'var(--wb-text)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 0 }}
             >
-              <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>
+              <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.02em' }}>
                 web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
               </span>
-              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 400, color: 'var(--wb-muted)' }}>
+              <span style={{ marginLeft: 8, fontSize: 13, fontWeight: 400, color: 'var(--wb-muted)' }}>
                 UX Audit
               </span>
             </a>
@@ -113,8 +113,8 @@ export default function HomePage() {
               <div className="hidden sm:flex items-center gap-5">
                 {[{ v: '51', l: 'checks' }, { v: '6', l: 'categories' }].map(({ v, l }) => (
                   <div key={l} className="flex items-baseline gap-1">
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--wb-accent)' }}>{v}</span>
-                    <span style={{ fontSize: 12, color: 'var(--wb-muted)' }}>{l}</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--wb-accent)' }}>{v}</span>
+                    <span style={{ fontSize: 13, color: 'var(--wb-muted)' }}>{l}</span>
                   </div>
                 ))}
               </div>
@@ -176,7 +176,7 @@ export default function HomePage() {
             }}
           >
             {/* Hero */}
-            <section className="flex flex-col items-center justify-center px-4 pt-10 sm:pt-16 pb-6 sm:pb-10 text-center">
+            <section className="flex flex-col items-center justify-center px-4 sm:px-8 lg:px-[70px] pt-12 sm:pt-20 pb-8 sm:pb-12 text-center">
 
               {/* Eyebrow pill */}
               <div
@@ -195,13 +195,13 @@ export default function HomePage() {
               {/* Headline */}
               <h1
                 style={{
-                  fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                  fontSize: 'clamp(2.4rem, 5vw, 4.5rem)',
                   fontWeight: 800,
                   letterSpacing: '-0.03em',
                   lineHeight: 1.1,
                   color: 'var(--wb-text)',
-                  maxWidth: 680,
-                  marginBottom: '1rem',
+                  maxWidth: 860,
+                  marginBottom: '1.25rem',
                 }}
               >
                 Is your website{' '}
@@ -211,11 +211,11 @@ export default function HomePage() {
               {/* Subheadline */}
               <p
                 style={{
-                  fontSize: 'clamp(0.95rem, 2vw, 1.1rem)',
+                  fontSize: 'clamp(1rem, 2vw, 1.3rem)',
                   color: 'var(--wb-muted)',
-                  maxWidth: 500,
+                  maxWidth: 680,
                   lineHeight: 1.65,
-                  marginBottom: '1rem',
+                  marginBottom: '1.25rem',
                 }}
               >
                 Get a full technical and UX report across{' '}
@@ -224,7 +224,7 @@ export default function HomePage() {
               </p>
 
               {/* Social proof + CTA link */}
-              <p style={{ fontSize: 13, color: 'var(--wb-muted)', marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: 14, color: 'var(--wb-muted)', marginBottom: '1.75rem' }}>
                 Trusted by businesses and developers to identify what is holding their websites back.{' '}
                 <button
                   onClick={() => setBookingOpen(true)}
@@ -243,7 +243,7 @@ export default function HomePage() {
                * This is the "source" of the morph - exits upward
                * while the header input enters from below.
                */}
-              <div style={{ position: 'relative', width: '100%', maxWidth: 560, padding: 12 }}>
+              <div style={{ position: 'relative', width: '100%', maxWidth: 720, padding: 12 }}>
                 <CornerBracket pos="tl" />
                 <CornerBracket pos="tr" />
                 <CornerBracket pos="bl" />
@@ -275,13 +275,13 @@ export default function HomePage() {
               )}
 
               {/* Trust line */}
-              <p style={{ fontSize: 12, color: 'var(--wb-muted)', marginTop: '1.25rem' }}>
+              <p style={{ fontSize: 13, color: 'var(--wb-muted)', marginTop: '1.5rem' }}>
                 Powered by <a href="https://exlinelabs.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--wb-muted)', textDecoration: 'underline', textUnderlineOffset: 3 }}>Exline Labs</a> - Google PageSpeed Insights + axe-core WCAG engine
               </p>
             </section>
 
             {/* Category breakdown grid */}
-            <section style={{ maxWidth: 900, margin: '0 auto', width: '100%', padding: '0 1rem 4rem' }}>
+            <section className="px-4 sm:px-8 lg:px-[70px]" style={{ width: '100%', paddingBottom: '4rem' }}>
               <div className="flex items-center gap-3 mb-4">
                 <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--wb-muted)' }}>
                   What we check
@@ -304,7 +304,7 @@ export default function HomePage() {
                     style={{ background: 'var(--wb-surface)' }}
                   >
                     <div className="flex items-center justify-between">
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--wb-text)' }}>{cat}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--wb-text)' }}>{cat}</span>
                       <span
                         style={{
                           fontSize: 11, fontWeight: 700,
@@ -317,7 +317,7 @@ export default function HomePage() {
                         {checks}
                       </span>
                     </div>
-                    <span style={{ fontSize: 12, color: 'var(--wb-muted)', lineHeight: 1.5 }}>{desc}</span>
+                    <span style={{ fontSize: 13, color: 'var(--wb-muted)', lineHeight: 1.5 }}>{desc}</span>
                   </div>
                 ))}
               </div>
@@ -334,8 +334,8 @@ export default function HomePage() {
                   { v: '100%', l: 'free' },
                 ].map(({ v, l }) => (
                   <div key={l} className="flex flex-col items-center flex-1">
-                    <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--wb-text)', letterSpacing: '-0.02em' }}>{v}</span>
-                    <span style={{ fontSize: 11, color: 'var(--wb-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500 }}>{l}</span>
+                    <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--wb-text)', letterSpacing: '-0.02em' }}>{v}</span>
+                    <span style={{ fontSize: 12, color: 'var(--wb-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500 }}>{l}</span>
                   </div>
                 ))}
               </div>
@@ -351,7 +351,7 @@ export default function HomePage() {
        * The 0.28s delay lets the hero collapse begin before results appear.
        */}
       <div
-        className="flex-1 px-4 sm:px-6 py-4 max-w-5xl mx-auto w-full"
+        className="flex-1 px-4 sm:px-8 lg:px-[70px] py-6 w-full"
         style={{
           opacity: active ? 1 : 0,
           transform: active ? 'translateY(0)' : 'translateY(20px)',
