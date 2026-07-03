@@ -22,7 +22,8 @@ interface SummaryPanelProps {
 }
 
 export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUrl: _shareUrl, isPartial, onRerun }: SummaryPanelProps) {
-  const [emailModal, setEmailModal] = useState<'md' | 'pdf' | null>(null);
+  const [emailModal, setEmailModal] = useState<'md' | null>(null);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
   const scores: Partial<Record<string, number>> = {};
   let totalChecks = 0, totalFail = 0, totalWarn = 0, totalPass = 0;
 
@@ -39,6 +40,33 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
   const dateStr = scannedAt
     ? new Date(scannedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
     : null;
+
+  async function downloadPdf() {
+    if (pdfDownloading) return;
+    setPdfDownloading(true);
+    try {
+      const res = await fetch('/api/report-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, overallScore, categories, scannedAt }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+
+      const blob = await res.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = `exlinelabs-ux-audit-${(() => {
+        try { return new URL(url).hostname; } catch { return 'report'; }
+      })()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(href);
+    } catch (err) {
+      console.error('[SummaryPanel] PDF download failed:', err);
+    } finally {
+      setPdfDownloading(false);
+    }
+  }
 
   return (
     <>
@@ -76,17 +104,31 @@ export function SummaryPanel({ overallScore, categories, url, scannedAt, shareUr
             .md
           </button>
 
-          {/* PDF export */}
+          {/* PDF download */}
           <button
-            onClick={() => setEmailModal('pdf')}
+            onClick={downloadPdf}
+            disabled={pdfDownloading}
             className="flex items-center gap-1 px-2 py-1 rounded transition-opacity hover:opacity-80"
-            style={{ background: 'var(--wb-border)', color: 'var(--wb-muted)', fontSize: 11, fontWeight: 600 }}
-            title="Email as PDF"
+            style={{
+              background: 'var(--wb-border)',
+              color: 'var(--wb-muted)',
+              fontSize: 11,
+              fontWeight: 600,
+              opacity: pdfDownloading ? 0.6 : 1,
+              cursor: pdfDownloading ? 'default' : 'pointer',
+            }}
+            title="Download as PDF"
           >
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-              <path d="M1 3l5 3.5L11 3M1 3h10v7H1V3z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            PDF
+            {pdfDownloading ? (
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ animation: 'spin 0.8s linear infinite' }}>
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="14 8" strokeLinecap="round"/>
+              </svg>
+            ) : (
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1v7m0 0L3 5m3 3l3-3M1.5 10.5h9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+            {pdfDownloading ? 'Generating…' : 'PDF'}
           </button>
 
           {/* Re-run */}
