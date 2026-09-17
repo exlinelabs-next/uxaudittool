@@ -28,7 +28,18 @@ export async function getBrowserConfig(): Promise<BrowserConfig> {
     // not on PATH - fall through
   }
 
-  // 3. @sparticuz/chromium - last resort fallback
+  // 3. Locally installed Chrome on macOS - @sparticuz/chromium is a Linux-only binary
+  if (process.platform === 'darwin') {
+    const { existsSync } = await import('fs');
+    const macChrome = [
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+    ].find(p => existsSync(p));
+    if (macChrome) return { executablePath: macChrome, args: SANDBOX_ARGS };
+  }
+
+  // 4. @sparticuz/chromium - last resort fallback (Linux)
   const { default: chromium } = await import('@sparticuz/chromium');
   return { executablePath: await chromium.executablePath(), args: chromium.args };
 }

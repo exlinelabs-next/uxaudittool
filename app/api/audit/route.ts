@@ -59,20 +59,38 @@ function getSiteOrigin(request: NextRequest): string {
   return new URL(request.url).origin;
 }
 
-// Origins allowed to call the audit API
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'https://localhost:3000',
+// Origins allowed to call the audit API (extend via comma-separated ALLOWED_ORIGINS env)
+const ALLOWED_ORIGINS = new Set([
   'http://ux-audit.exlinelabs.co.uk',
   'https://ux-audit.exlinelabs.co.uk',
   'https://exlinelabs.com',
   'https://www.exlinelabs.com',
-];
+  ...(process.env.ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map(o => o.trim().replace(/\/$/, ''))
+    .filter(Boolean),
+]);
 
 function isAllowedOrigin(request: NextRequest): boolean {
-  const origin = request.headers.get('origin') ?? request.headers.get('referer');
-  if (!origin) return true;
-  return ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed));
+  const header = request.headers.get('origin') ?? request.headers.get('referer');
+  if (!header) return true;
+
+  // Compare exact origins - prefix matching would let e.g. exlinelabs.com.evil.net through
+  let caller: URL;
+  try {
+    caller = new URL(header);
+  } catch {
+    return false;
+  }
+
+  // Same-origin requests from the app itself, whatever host/port it is served on
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+  if (host && caller.host === host) return true;
+
+  // Any localhost port during development
+  if (process.env.NODE_ENV === 'development' && isLocalhostUrl(caller)) return true;
+
+  return ALLOWED_ORIGINS.has(caller.origin);
 }
 
 function isLocalhostUrl(url: URL): boolean {

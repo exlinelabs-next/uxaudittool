@@ -21,7 +21,10 @@ export async function fetchPageSpeedData(
   signal?: AbortSignal
 ): Promise<PageSpeedResponse> {
   const key = process.env.PAGESPEED_API_KEY;
-  const endpoint = `${PAGESPEED_URL}?url=${encodeURIComponent(url)}&strategy=mobile&key=${key}`;
+  if (!key) console.warn('[audit] PAGESPEED_API_KEY is not set - using the keyless quota, which is heavily rate limited');
+  const params = new URLSearchParams({ url, strategy: 'mobile' });
+  if (key) params.set('key', key);
+  const endpoint = `${PAGESPEED_URL}?${params}`;
   const res = await fetch(endpoint, { signal });
   if (!res.ok) throw new Error(`PageSpeed API responded with ${res.status}`);
   return res.json();
