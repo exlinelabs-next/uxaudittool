@@ -11,7 +11,7 @@ import { trackAuditStarted, trackAuditCompleted, trackAuditErrored } from '@/lib
 /* ── Corner bracket decoration ───────────────────────────────────────────── */
 function CornerBracket({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
   const t = pos[0] === 't', l = pos[1] === 'l';
-  const s = 'var(--wb-accent-ink)';
+  const s = 'var(--wb-accent)';
   return (
     <svg
       width={20} height={20} viewBox="0 0 20 20" fill="none"
@@ -205,7 +205,7 @@ export default function HomePage() {
                 }}
               >
                 Is your website{' '}
-                <span style={{ color: 'var(--wb-accent-ink)' }}>losing customers?</span>
+                <span style={{ color: 'var(--wb-accent)' }}>losing customers?</span>
               </h1>
 
               {/* Subheadline */}
@@ -230,7 +230,7 @@ export default function HomePage() {
                   onClick={() => setBookingOpen(true)}
                   style={{
                     background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                    color: 'var(--wb-accent-ink)', textDecoration: 'underline', textUnderlineOffset: 3,
+                    color: 'var(--wb-accent)', textDecoration: 'underline', textUnderlineOffset: 3,
                     fontWeight: 600, fontSize: 'inherit',
                   }}
                 >
@@ -385,7 +385,7 @@ export default function HomePage() {
               style={{
                 width: 38, height: 38,
                 borderColor: 'var(--wb-border)',
-                borderTopColor: 'var(--wb-accent-ink)',
+                borderTopColor: 'var(--wb-accent)',
                 animation: 'spin 0.8s linear infinite',
               }}
             />

@@ -94,7 +94,7 @@ export function EmailReportModal({ format, url, overallScore, categories, scanne
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 width: 32, height: 32, borderRadius: 6,
                 background: 'color-mix(in srgb, var(--wb-accent) 15%, transparent)',
-                color: 'var(--wb-accent-ink)', fontSize: 11, fontWeight: 700,
+                color: 'var(--wb-accent)', fontSize: 11, fontWeight: 700,
               }}
             >
               {formatIcon}
