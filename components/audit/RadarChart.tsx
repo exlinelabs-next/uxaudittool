@@ -86,7 +86,7 @@ export function RadarChart({ scores }: Props) {
         d={polyPath(dataPoints)}
         fill="var(--wb-accent)"
         fillOpacity="0.08"
-        stroke="var(--wb-accent-ink)"
+        stroke="var(--wb-accent)"
         strokeWidth="1.5"
         strokeLinejoin="round"
       />
