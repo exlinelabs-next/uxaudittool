@@ -11,7 +11,7 @@ import { trackAuditStarted, trackAuditCompleted, trackAuditErrored } from '@/lib
 /* ── Corner bracket decoration ───────────────────────────────────────────── */
 function CornerBracket({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
   const t = pos[0] === 't', l = pos[1] === 'l';
-  const s = 'var(--wb-accent)';
+  const s = 'var(--wb-accent-ink)';
   return (
     <svg
       width={20} height={20} viewBox="0 0 20 20" fill="none"
@@ -113,7 +113,7 @@ export default function HomePage() {
               <div className="hidden sm:flex items-center gap-5">
                 {[{ v: '51', l: 'checks' }, { v: '6', l: 'categories' }].map(({ v, l }) => (
                   <div key={l} className="flex items-baseline gap-1">
-                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--wb-accent)' }}>{v}</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--wb-accent-ink)' }}>{v}</span>
                     <span style={{ fontSize: 13, color: 'var(--wb-muted)' }}>{l}</span>
                   </div>
                 ))}
@@ -205,7 +205,7 @@ export default function HomePage() {
                 }}
               >
                 Is your website{' '}
-                <span style={{ color: 'var(--wb-accent)' }}>losing customers?</span>
+                <span style={{ color: 'var(--wb-accent-ink)' }}>losing customers?</span>
               </h1>
 
               {/* Subheadline */}
@@ -230,7 +230,7 @@ export default function HomePage() {
                   onClick={() => setBookingOpen(true)}
                   style={{
                     background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                    color: 'var(--wb-accent)', textDecoration: 'underline', textUnderlineOffset: 3,
+                    color: 'var(--wb-accent-ink)', textDecoration: 'underline', textUnderlineOffset: 3,
                     fontWeight: 600, fontSize: 'inherit',
                   }}
                 >
@@ -308,7 +308,7 @@ export default function HomePage() {
                       <span
                         style={{
                           fontSize: 11, fontWeight: 700,
-                          color: 'var(--wb-accent)',
+                          color: 'var(--wb-accent-ink)',
                           background: 'color-mix(in srgb, var(--wb-accent) 10%, transparent)',
                           border: '1px solid color-mix(in srgb, var(--wb-accent) 20%, transparent)',
                           padding: '1px 6px', borderRadius: 4,
@@ -385,7 +385,7 @@ export default function HomePage() {
               style={{
                 width: 38, height: 38,
                 borderColor: 'var(--wb-border)',
-                borderTopColor: 'var(--wb-accent)',
+                borderTopColor: 'var(--wb-accent-ink)',
                 animation: 'spin 0.8s linear infinite',
               }}
             />

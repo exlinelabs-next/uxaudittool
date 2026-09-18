@@ -68,7 +68,7 @@ export function CookieConsent() {
               href="/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: 'var(--wb-accent)', textDecoration: 'underline' }}
+              style={{ color: 'var(--wb-accent-ink)', textDecoration: 'underline' }}
             >
               Privacy policy
             </a>
