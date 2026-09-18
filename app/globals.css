@@ -5,6 +5,7 @@
   --wb-accent:    #C8F135;   /* lime - CTA buttons only                    */
   --wb-accent-fg: #000;      /* text colour on accent-coloured buttons     */
   --wb-accent-ink:#C8F135;   /* accent as text / thin strokes              */
+  --wb-accent-hover:#C8F135; /* CTA hover - unchanged on dark              */
   --wb-eyebrow:   #C8F135;   /* eyebrow pill label                         */
   --wb-bg:        #09090b;   /* page background                            */
   --wb-surface:   #111114;   /* panel / card surface                       */
@@ -27,6 +28,7 @@
   --wb-accent-fg: #0F0F0F;   /* near-black text on lime buttons            */
   --wb-accent-ink:#0F0F0F;   /* accent text / thin strokes - lime is only
                                 ~1.3:1 on white                            */
+  --wb-accent-hover:#A4C62B; /* darker lime on CTA hover                   */
   --wb-eyebrow:   #0F0F0F;   /* eyebrow pill label - black on light bg     */
   --wb-bg:        #f4f4f5;
   --wb-surface:   #ffffff;
@@ -64,6 +66,10 @@ html, body {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--wb-bg); }
 ::-webkit-scrollbar-thumb { background: var(--wb-border); border-radius: 3px; }
+
+/* CTA hover - indirection through a variable so inline styles pick it up */
+.wb-cta { --wb-cta-bg: var(--wb-accent); }
+.wb-cta:hover { --wb-cta-bg: var(--wb-accent-hover); }
 
 /* Shared keyframes */
 @keyframes spin { to { transform: rotate(360deg); } }

@@ -27,8 +27,8 @@ export function AuditCTA({
         </div>
         <button
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded font-semibold shrink-0 transition-opacity hover:opacity-90"
-          style={{ fontSize: 14, background: 'var(--wb-accent)', color: 'var(--wb-accent-fg)', border: 'none', cursor: 'pointer' }}
+          className="wb-cta inline-flex items-center gap-2 px-5 py-2.5 rounded font-semibold shrink-0 transition-colors"
+          style={{ fontSize: 14, background: 'var(--wb-cta-bg)', color: 'var(--wb-accent-fg)', border: 'none', cursor: 'pointer' }}
         >
           {label}
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
