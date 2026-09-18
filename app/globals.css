@@ -24,8 +24,8 @@
 [data-theme="light"] {
   --wb-accent:    #C8F135;   /* brand lime - CTA buttons and fills          */
   --wb-accent-fg: #0F0F0F;   /* near-black text on lime buttons             */
-  --wb-accent-ink:#5a9e00;   /* darker lime for accent text / thin strokes,
-                                lime itself is ~1.3:1 on white              */
+  --wb-accent-ink:#0F0F0F;   /* accent text / thin strokes stay black - lime
+                                is only ~1.3:1 on white                     */
   --wb-bg:        #f4f4f5;
   --wb-surface:   #ffffff;
   --wb-surface-2: #f1f1f4;

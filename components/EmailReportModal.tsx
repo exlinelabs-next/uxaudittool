@@ -93,7 +93,7 @@ export function EmailReportModal({ format, url, overallScore, categories, scanne
               style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 width: 32, height: 32, borderRadius: 6,
-                background: 'color-mix(in srgb, var(--wb-accent-ink) 15%, transparent)',
+                background: 'color-mix(in srgb, var(--wb-accent) 15%, transparent)',
                 color: 'var(--wb-accent-ink)', fontSize: 11, fontWeight: 700,
               }}
             >

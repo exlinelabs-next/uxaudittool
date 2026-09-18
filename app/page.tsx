@@ -183,12 +183,12 @@ export default function HomePage() {
                 className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-6"
                 style={{
                   fontSize: 12, fontWeight: 500,
-                  border: '1px solid color-mix(in srgb, var(--wb-accent-ink) 30%, transparent)',
-                  background: 'color-mix(in srgb, var(--wb-accent-ink) 6%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--wb-accent) 30%, transparent)',
+                  background: 'color-mix(in srgb, var(--wb-accent) 6%, transparent)',
                   color: 'var(--wb-accent-ink)',
                 }}
               >
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--wb-accent-ink)', display: 'inline-block' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--wb-accent)', display: 'inline-block' }} />
                 Free &middot; No signup &middot; Instant results
               </div>
 
@@ -309,8 +309,8 @@ export default function HomePage() {
                         style={{
                           fontSize: 11, fontWeight: 700,
                           color: 'var(--wb-accent-ink)',
-                          background: 'color-mix(in srgb, var(--wb-accent-ink) 10%, transparent)',
-                          border: '1px solid color-mix(in srgb, var(--wb-accent-ink) 20%, transparent)',
+                          background: 'color-mix(in srgb, var(--wb-accent) 10%, transparent)',
+                          border: '1px solid color-mix(in srgb, var(--wb-accent) 20%, transparent)',
                           padding: '1px 6px', borderRadius: 4,
                         }}
                       >
