@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       >
         <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-3 flex items-center gap-3">
           <a href="/" className="text-sm font-bold tracking-tight shrink-0" style={{ color: 'var(--wb-text)', textDecoration: 'none' }}>
-            web<span style={{ color: 'var(--wb-accent)' }}>beet</span>
+            web<span style={{ color: 'var(--wb-accent-ink)' }}>beet</span>
             <span className="ml-1.5 text-xs font-normal" style={{ color: 'var(--wb-muted)' }}>UX Audit</span>
           </a>
           <a
