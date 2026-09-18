@@ -4,6 +4,7 @@
 :root, [data-theme="dark"] {
   --wb-accent:    #C8F135;   /* lime - CTA buttons only                    */
   --wb-accent-fg: #000;      /* text colour on accent-coloured buttons     */
+  --wb-eyebrow:   #C8F135;   /* eyebrow pill label                         */
   --wb-bg:        #09090b;   /* page background                            */
   --wb-surface:   #111114;   /* panel / card surface                       */
   --wb-surface-2: #17171b;   /* nested rows, table stripes                 */
@@ -21,8 +22,9 @@
 
 /* ── Brand tokens - light mode ───────────────────────────────────────────── */
 [data-theme="light"] {
-  --wb-accent:    #5a9e00;   /* darker lime - legible on white             */
+  --wb-accent:    #C8F135;   /* brand lime                                 */
   --wb-accent-fg: #fff;      /* white text on dark green accent            */
+  --wb-eyebrow:   #0F0F0F;   /* eyebrow pill label - black on light bg     */
   --wb-bg:        #f4f4f5;
   --wb-surface:   #ffffff;
   --wb-surface-2: #f1f1f4;

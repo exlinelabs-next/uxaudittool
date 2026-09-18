@@ -185,7 +185,7 @@ export default function HomePage() {
                   fontSize: 12, fontWeight: 500,
                   border: '1px solid color-mix(in srgb, var(--wb-accent) 30%, transparent)',
                   background: 'color-mix(in srgb, var(--wb-accent) 6%, transparent)',
-                  color: 'var(--wb-accent)',
+                  color: 'var(--wb-eyebrow)',
                 }}
               >
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--wb-accent)', display: 'inline-block' }} />
